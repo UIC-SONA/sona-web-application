@@ -255,3 +255,8 @@ export const keycloakIssuerMetadata = {
 }
 
 export const keycloakIssuer = new Issuer(keycloakIssuerMetadata);
+
+// Aunque se podría usar Issuer.discover(KEYCLOAK_ISSUER), definimos la metadata de esta manera
+// para evitar realizar una petición HTTP en cada solicitud.
+// Recordemos que Next.js funciona en un entorno serverless, donde cada petición suele crear un contenedor nuevo.
+// Al usar esta aproximación, evitamos la sobrecarga de solicitudes HTTP innecesarias.

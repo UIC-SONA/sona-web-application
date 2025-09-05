@@ -19,7 +19,7 @@ export default async function AppLayout({children}: Readonly<PropsWithChildren>)
           <AlertDialogHeader>
             <AlertDialogTitle>Error</AlertDialogTitle>
             <AlertDialogDescription>
-              {authErrorMessages[session.error]}
+              {authErrorMessages[session.error] || session.error}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

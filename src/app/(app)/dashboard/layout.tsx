@@ -1,9 +1,8 @@
 import {AppSidebarLayout} from "@/components/design/sidebar/app-sidebar-layout";
 import {getServerSession} from "@/lib/session-server";
 import {MenuGroup} from "@/components/design/sidebar/app-sidebar-main-menu";
-import {BoxIcon, ClipboardListIcon, ContactIcon, FileTextIcon, HandCoinsIcon, HouseIcon, UserIcon} from "lucide-react";
+import {BlocksIcon, BookOpenIcon, CalendarIcon, ThumbsUpIcon, UserIcon} from "lucide-react";
 import {PropsWithChildren} from "react";
-
 
 export default async function Layout({children}: Readonly<PropsWithChildren>) {
   
@@ -13,6 +12,7 @@ export default async function Layout({children}: Readonly<PropsWithChildren>) {
   }
   
   const user = session.user;
+  const authorities = session.authorities;
   
   if (!user) {
     throw new Error("User not found in session");
@@ -20,44 +20,64 @@ export default async function Layout({children}: Readonly<PropsWithChildren>) {
   
   const menu: MenuGroup[] = [
     {
-      label: "Gestión de Avalúos",
+      label: "Panel",
       menu: [
-        {
-          title: "Miembros",
-          path: "/dashboard/members",
-          icon: <UserIcon/>,
-        },
-        {
-          title: "Solicitudes",
-          path: "/dashboard/appraisal-orders",
-          icon: <ClipboardListIcon/>,
-        },
-        {
-          title: "Avalúos",
-          path: "/dashboard/appraisals",
-          icon: <HandCoinsIcon/>,
-        },
-        {
-          title: "Activos",
-          path: "/dashboard/assets",
-          icon: <BoxIcon/>,
-        },
-        {
-          title: "Clientes",
-          path: "/dashboard/customers",
-          icon: <ContactIcon/>,
-        },
-        {
-          title: 'Informes',
-          path: '/avaluos/informes',
-          icon: <FileTextIcon/>,
-        },
-        {
-          title: 'Referencias',
-          path: '/dashboard/references',
-          icon: <HouseIcon/>,
-        },
-      
+        ...(anyRole(authorities, ["admin", "administative"]) ?
+          [
+            {
+              title: "Usuarios",
+              path: "/dashboard/users",
+              icon: <UserIcon/>,
+            },
+            {
+              title: "Tips",
+              path: "/dashboard/tips",
+              icon: <BookOpenIcon/>
+            },
+            {
+              title: "Posts",
+              path: "/dashboard/posts",
+              icon: <ThumbsUpIcon/>
+            },
+            {
+              title: "Contenido didáctico",
+              path: "/dashboard/didactic-content",
+              icon: <BlocksIcon/>
+            },
+            {
+              title: "Profesionales",
+              path: "#",
+              icon: <UserIcon/>,
+              subMenu: [
+                {
+                  title: "Gestion",
+                  path: "/dashboard/professionals",
+                },
+                {
+                  title: "Horarios de atención",
+                  path: "/dashboard/professional-schedules",
+                },
+              ],
+            },
+          ] : []),
+        ...(anyRole(authorities, ["legal_professional", "medical_professional", "admin", "administative"]) ?
+          [
+            {
+              title: "Ver Agenda",
+              path: "#",
+              icon: <CalendarIcon/>,
+              subMenu: [
+                {
+                  title: "Gestion",
+                  path: "/dashboard/appointments",
+                },
+                {
+                  title: "Calendario",
+                  path: "/appointments-calendar",
+                },
+              ]
+            },
+          ] : []),
       ],
     }
   ]
@@ -70,4 +90,8 @@ export default async function Layout({children}: Readonly<PropsWithChildren>) {
   >
     {children}
   </AppSidebarLayout>
+}
+
+function anyRole(authorities: string[], roles: string[], prefix = "ROLE_"): boolean {
+  return roles.some(role => authorities.includes(prefix + role));
 }

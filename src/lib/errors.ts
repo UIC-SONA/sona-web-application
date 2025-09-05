@@ -1,7 +1,6 @@
 import {isAxiosError} from "axios";
 import {isOAuth2Error} from "@/lib/oauth2";
 import {isProblemDetails} from "@/lib/http";
-import {AuthError} from "@/types/next-auth";
 
 
 const defaultError: ErrorDescription = {
@@ -103,7 +102,7 @@ export function isValidationErrorArray(obj: unknown): obj is ValidationError[] {
   return Array.isArray(obj) && obj.every(isValidationError);
 }
 
-export const authErrorMessages: Record<AuthError, string> = {
+export const authErrorMessages: Record<string, string> = {
   ExpiredSession: "Tu sesión ha expirado. Por favor, inicia sesión de nuevo.",
   RefreshAccessTokenError: "No se pudo renovar tu sesión. Por favor, inicia sesión de nuevo.",
   OAuth2Error: "Hubo un problema mientras se autenticaba con el servidor. Por favor, inicie sesión nuevamente.",
