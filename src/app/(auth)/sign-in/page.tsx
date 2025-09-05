@@ -27,7 +27,7 @@ export default function Page() {
   const loading = form.formState.isSubmitting || form.formState.isSubmitSuccessful;
   
   const onSubmit = async (data: LoginData) => {
-    const result = await signIn("system-login", {
+    const result = await signIn("credentials", {
       username: data.username,
       password: data.password,
       redirect: false
@@ -36,7 +36,7 @@ export default function Page() {
       setFormRootError(form, result.error);
       throw result.error;
     } else {
-      router.push("/select-company");
+      router.push("/dashboard");
     }
   }
   

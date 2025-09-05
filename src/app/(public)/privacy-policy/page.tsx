@@ -4,7 +4,7 @@ import Image from "next/image";
 
 export default function Page() {
   return (
-    <div className="max-w-5xl mx-auto px-6 py-10 text-gray-800">
+    <div className="max-w-5xl mx-auto px-6 py-10">
       <h1 className="text-3xl font-bold text-center mb-8">POLITICA DE PRIVACIDAD Y TRATAMIENTO DE DATOS PERSONALES</h1>
       <section className="space-y-4 text-justify">
         <p>
