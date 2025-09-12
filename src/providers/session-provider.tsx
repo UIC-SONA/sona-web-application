@@ -5,7 +5,7 @@ import {PropsWithChildren, useEffect} from "react";
 import {setCacheSession} from "@/lib/session-client";
 
 export function SessionProvider({children}: Readonly<PropsWithChildren>) {
-  return <NextAuthSessionProvider refetchInterval={60}>
+  return <NextAuthSessionProvider refetchInterval={60} refetchOnWindowFocus={true}>
     <SessionUpdater/>
     {children}
   </NextAuthSessionProvider>;

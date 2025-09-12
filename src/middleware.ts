@@ -1,6 +1,6 @@
 import {NextResponse} from 'next/server';
 import {NextRequestWithAuth, withAuth} from 'next-auth/middleware';
-import {guards} from "@/guards";
+import {guards} from "@/auth/guards";
 import {NEXTAUTH_SECRET} from "@/constants";
 
 function toUrl(redirect: string, req: NextRequestWithAuth): URL {

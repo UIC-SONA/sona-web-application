@@ -1,7 +1,7 @@
 import {AppSidebarLayout} from "@/components/design/sidebar/app-sidebar-layout";
 import {getServerSession} from "@/lib/session-server";
 import {MenuGroup} from "@/components/design/sidebar/app-sidebar-main-menu";
-import {BlocksIcon, BookOpenIcon, CalendarIcon, ThumbsUpIcon, UserIcon} from "lucide-react";
+import {BlocksIcon, BookOpenIcon, CalendarIcon, MessageSquareIcon, ThumbsUpIcon, UserIcon} from "lucide-react";
 import {PropsWithChildren} from "react";
 
 export default async function Layout({children}: Readonly<PropsWithChildren>) {
@@ -55,7 +55,7 @@ export default async function Layout({children}: Readonly<PropsWithChildren>) {
                 },
                 {
                   title: "Horarios de atención",
-                  path: "/dashboard/professional-schedules",
+                  path: "/dashboard/professionals-schedules",
                 },
               ],
             },

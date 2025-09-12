@@ -1,4 +1,4 @@
-import {authOptions} from "@/lib/auth"
+import {authOptions} from "@/auth/auth"
 import {getServerSession as getSession, Session} from "next-auth";
 import {cookies, headers} from "next/headers";
 import type {NextApiRequest, NextApiResponse} from "next";

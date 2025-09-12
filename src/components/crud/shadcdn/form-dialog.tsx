@@ -36,7 +36,12 @@ export function FormDialog<F extends FieldValues>({
   
   const errors = form.formState.errors;
   
-  return <Dialog open={open} onOpenChange={onOpenChange} modal={true}>
+  const onOpenChangeHandle = (open: boolean) => {
+    if (form.formState.isSubmitting) return;
+    onOpenChange(open);
+  }
+  
+  return <Dialog open={open} onOpenChange={onOpenChangeHandle} >
     <DialogContent className={dialogClassName} onInteractOutside={(e) => e.preventDefault()}>
       <Form {...form}>
         <form onSubmit={submit} autoComplete='off'>

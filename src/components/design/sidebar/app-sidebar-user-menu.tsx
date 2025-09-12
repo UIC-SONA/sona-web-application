@@ -1,10 +1,11 @@
 "use client"
 
-import {BadgeCheck, ChevronsUpDown, LogOut, MessageSquare,} from "lucide-react"
+import {ChevronsUpDown, LogOut, MessageSquareIcon, UserIcon,} from "lucide-react"
 import {Avatar, AvatarFallback, AvatarImage,} from "@/components/ui/avatar"
 import {DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuSeparator, DropdownMenuTrigger,} from "@/components/ui/dropdown-menu"
 import {SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar,} from "@/components/ui/sidebar"
 import {useLogout} from "@/hooks/use-logout";
+import {useMemo} from "react";
 
 export interface AppSidebarUserMenuProps {
   user: {
@@ -14,9 +15,26 @@ export interface AppSidebarUserMenuProps {
   }
 }
 
+
 export function AppSidebarUserMenu({user}: Readonly<AppSidebarUserMenuProps>) {
   const {isMobile} = useSidebar()
   const logout = useLogout()
+  
+  const userOptions = useMemo(() => [
+    {
+      label: "Profile",
+      icon: <UserIcon/>,
+      onClick: () => {
+        console.log("Profile clicked");
+      },
+    }, {
+      label: "Mensajes",
+      icon: <MessageSquareIcon/>,
+      onClick: () => {
+        console.log("Messages clicked");
+      },
+    }
+  ], []);
   
   return <SidebarMenu>
     <SidebarMenuItem>
@@ -44,14 +62,12 @@ export function AppSidebarUserMenu({user}: Readonly<AppSidebarUserMenuProps>) {
             </DropdownMenuLabel>
             <DropdownMenuSeparator/>
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <BadgeCheck/>
-                Perfil
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <MessageSquare/>
-                Mensajes
-              </DropdownMenuItem>
+              {userOptions.map(option => (
+                <DropdownMenuItem key={option.label} onClick={option.onClick}>
+                  {option.icon}
+                  {option.label}
+                </DropdownMenuItem>
+              ))}
             </DropdownMenuGroup>
             <DropdownMenuSeparator/>
             <DropdownMenuItem onClick={logout}>

@@ -1,4 +1,4 @@
-import {keycloakIssuer, keycloakIssuerMetadata} from "@/lib/keycloak-issuer";
+import {keycloakIssuer, keycloakIssuerMetadata} from "@/auth/keycloak-issuer";
 import {AuthOptions} from "next-auth";
 import {JWT} from "next-auth/jwt";
 import {parseError} from "@/lib/errors";
@@ -6,6 +6,7 @@ import {KeycloakProfile} from "next-auth/providers/keycloak";
 import {KEYCLOAK_ID, KEYCLOAK_SECRET} from "@/constants";
 import {TokenSet, TokenSetParameters} from "openid-client";
 import {decodeJwt, JWTPayload} from "jose";
+import logger from "@/utils/logger";
 
 const client = new keycloakIssuer.Client({
   client_id: KEYCLOAK_ID,
@@ -33,7 +34,7 @@ function updateToken(token: JWT, tokenSet: TokenSetParameters): JWT {
     accessToken: tokenSet.access_token,
     accessTokenExpires: Date.now() + (tokenSet.expires_in as number) * 1000,
     refreshToken: tokenSet.refresh_token,
-    refreshTokenExpires: Date.now() + (tokenSet.expires_in as number) * 1000,
+    refreshTokenExpires: Date.now() + (tokenSet.refresh_expires_in as number) * 1000,
     authorities: authorityConverter(decodedToken),
   }
 }
@@ -43,7 +44,7 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
     const response = await client.refresh(token.refreshToken);
     return updateToken(token, response);
   } catch (error) {
-    console.log("Error refreshing token: ", error);
+    logger.error("Error refreshing token", error);
     return {
       ...token,
       error: "RefreshAccessTokenError",
@@ -114,7 +115,6 @@ export const authOptions: AuthOptions = {
   },
   callbacks: {
     async signIn({user, account}) {
-      console.log("signIn");
       if (account && user) {
         // Dado que se puede iniciar sesion tanto desde el proveedor de keycloak como desde el de credenciales
         // Si es desde credenciales, se copian los tokens al account tal como lo haría next-auth de forma nativa
@@ -135,21 +135,26 @@ export const authOptions: AuthOptions = {
     },
     async jwt({token, user, account}) {
       if (user && account) {
-        console.log("Inicialización de la sesión, expiration time (s): ", account.expires_in);
+        logger.debug("Inicialización de la sesión, account: ", account);
         return updateToken(token, account);
       }
       
       if (Date.now() < token.accessTokenExpires) {
-        console.log("Access token is valid");
+        if (logger.isLevelEnabled("debug")) {
+          logger.debug("Access token is valid", {
+            accessTokenExpiresIn: (token.accessTokenExpires - Date.now()) / 1000,
+            refreshTokenExpiresIn: (token.refreshTokenExpires - Date.now()) / 1000
+          });
+        }
         return token;
       }
       
       if (Date.now() < token.refreshTokenExpires) {
-        console.log("Access token has expired, refreshing...");
+        logger.debug("Access token has expired, refreshing...");
         return await refreshAccessToken(token);
       }
       
-      console.log("Refresh token has expired, user must sign in again");
+      logger.debug("Refresh token has expired, user must sign in again");
       return {
         ...token,
         error: "RefreshTokenExpired"

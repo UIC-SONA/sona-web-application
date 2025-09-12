@@ -3,6 +3,7 @@ import type {DeleteProps, EntityActionProps} from "@/components/crud/entity-crud
 import {useEntityDelete} from "@/components/crud/use-entity-delete";
 import {TrashIcon} from "lucide-react";
 import {FormDialog} from "@/components/crud/shadcdn/form-dialog";
+import {toast} from "sonner";
 
 export function EntityDeleteForm<TEntity extends Entity<ID>, ID = TEntity['id']>({
   entity,
@@ -15,7 +16,11 @@ export function EntityDeleteForm<TEntity extends Entity<ID>, ID = TEntity['id']>
   const {form, submit} = useEntityDelete({
     entity,
     deleteAction,
-    onSuccess,
+    onSuccess: e => {
+      if (onSuccess) onSuccess(e);
+      onOpenChange(false);
+      toast.success('Registro eliminado correctamente');
+    }
   });
   
   return <FormDialog

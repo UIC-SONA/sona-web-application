@@ -18,8 +18,8 @@ export function EntityCreateForm<TEntity extends Entity<ID>, Dto extends FieldVa
   
   const {form, submit} = useEntityCreate({
     createAction,
-    resolver,
-    defaultValues,
+    resolver: resolver(),
+    defaultValues: defaultValues(),
     onSuccess
   })
   

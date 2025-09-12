@@ -17,7 +17,6 @@ import {ColumnDef, ColumnFilter, RowData, TableState} from "@tanstack/react-tabl
  * Props utilizadas en una acción sobre una entidad, como edición o eliminación.
  *
  * @template TEntity Tipo de la entidad
- * @template ID Tipo del identificador de la entidad
  */
 export type EntityActionProps<TEntity extends Entity<ID>, ID> = {
   /** Entidad actual sobre la que se ejecuta la acción */
@@ -47,10 +46,10 @@ export type EntityAction<TEntity extends Entity<ID>, ID = TEntity['id']> =
     /** Identificador único de la acción, usado para distinguirla en la UI */
     id: string;
     /** Texto visible de la acción (por ejemplo, "Editar") */
-    label: string;
+    label: string | ((entity: TEntity) => string);
     
     /** Icono asociado a la acción (puede ser de una librería como Lucide o Material Icons) */
-    icon: ReactNode;
+    icon: ReactNode | ((entity: TEntity) => ReactNode);
     
     /** Indica si la acción está habilitada; si es una función, se evalúa con la entidad actual */
     enabled?: (entity: TEntity) => boolean;

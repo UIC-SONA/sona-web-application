@@ -56,7 +56,7 @@ export function tryParseError(error: unknown): ErrorDescription | undefined {
 export function parseError(error: unknown): ErrorDescription {
   const parsed = tryParseError(error)
   if (parsed) return parsed;
-  console.log("Unexpected error: ", error);
+  console.error("Unexpected error: ", error);
   return defaultError;
 }
 
@@ -64,7 +64,7 @@ export function parseValidationErrors(error: unknown): ValidationError[] {
   const payload = getPayloadError(error);
   const parsed = _tryParseValidationErrors(payload);
   if (parsed) return parsed;
-  console.log("Unexpected error: ", error);
+  console.error("Unexpected error: ", error);
   return [];
 }
 
@@ -72,7 +72,7 @@ export function parseErrorOrValidationErrors(error: unknown): ValidationError[] 
   const payload = getPayloadError(error);
   const parsed = _tryParseValidationErrors(payload) || _tryParseError(payload);
   if (parsed) return parsed;
-  console.log("Unexpected error: ", error);
+  console.error("Unexpected error: ", error);
   return defaultError;
 }
 

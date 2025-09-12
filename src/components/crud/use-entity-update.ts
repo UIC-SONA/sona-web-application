@@ -3,7 +3,7 @@ import {useEffect} from "react";
 import {setFormErrors} from "@/lib/forms";
 import type {Entity, Updatable} from "@/lib/crud";
 
-export interface EntityUpdateProps<TEntity extends Entity<ID>, ID, Dto extends FieldValues> {
+export interface EntityUpdateProps<TEntity extends Entity<ID>, Dto extends FieldValues, ID = TEntity["id"]> {
   updateAction: Updatable<TEntity, Dto, ID>['update'];
   entity: TEntity;
   resolver: (entity: TEntity) => Resolver<Dto>;
@@ -16,13 +16,13 @@ export interface EntityUpdate<Dto extends FieldValues> {
   submit: () => Promise<void>;
 }
 
-export function useEntityUpdate<TEntity extends Entity<ID>, ID, Dto extends FieldValues>({
+export function useEntityUpdate<TEntity extends Entity<ID>, Dto extends FieldValues, ID = TEntity["id"]>({
   updateAction,
   entity,
   resolver,
   defaultValues,
   onSuccess,
-}: EntityUpdateProps<TEntity, ID, Dto>): EntityUpdate<Dto> {
+}: EntityUpdateProps<TEntity, Dto, ID>): EntityUpdate<Dto> {
   
   const form = useForm<Dto>({
     resolver: resolver(entity),

@@ -1,7 +1,7 @@
 "use client"
 
 import type {Entity} from "@/lib/crud";
-import {type PropsWithChildren, useEffect, useImperativeHandle, useMemo, useState} from "react";
+import {type PropsWithChildren, ReactNode, useEffect, useImperativeHandle, useMemo, useState} from "react";
 import {Column, ColumnMeta, flexRender, type Table} from "@tanstack/react-table"
 import {Table as TableComponent, TableBody, TableCell, TableHead, TableHeader, TableRow,} from "@/components/ui/table"
 import {Button} from "@/components/ui/button";
@@ -25,7 +25,7 @@ import {cn} from "@/lib/utils";
 
 interface CustomProps {
   read: {
-    title?: string;
+    title?: ReactNode,
     perPage?: number[];
   }
 }
@@ -78,7 +78,7 @@ export function EntityCrud<TEntity extends Entity<ID>, Dto extends FieldValues, 
   
   return (
     <div className="w-full">
-      {title && <h2 className="text-2xl font-bold mb-4">{title}</h2>}
+      {["string", "number"].includes(typeof title) ? <h2 className="text-2xl font-bold mb-4">{title}</h2> : title}
       <div className="grid gap-4 mb-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 items-center">
         <IntelliSearch
           value={read.search}
@@ -102,7 +102,7 @@ export function EntityCrud<TEntity extends Entity<ID>, Dto extends FieldValues, 
           >
             <RefreshCwIcon/>
           </Button>
-          {(createProps && !!createProps.enabled) && <>
+          {(createProps && (createProps.enabled ?? true)) && <>
             <Button
               onClick={() => setCreateOpen(true)}
               variant="outline"
@@ -354,6 +354,9 @@ function EntityActionRender<TEntity extends Entity<ID>, ID = TEntity["id"]>({
     return <></>;
   }
   
+  const label = typeof entityAction.label === "function" ? entityAction.label(entity) : entityAction.label;
+  const icon = typeof entityAction.icon === "function" ? entityAction.icon(entity) : entityAction.icon;
+  
   const clickHandler = () => {
     if (!("onClick" in entityAction)) {
       setOpen(true);
@@ -375,9 +378,9 @@ function EntityActionRender<TEntity extends Entity<ID>, ID = TEntity["id"]>({
       }}>
         {showLoading
           ? <LoaderCircle className="animate-spin"/>
-          : entityAction.icon
+          : icon
         }
-        {entityAction.label}
+        {label}
       </DropdownMenuItem>
     );
   }
@@ -388,8 +391,8 @@ function EntityActionRender<TEntity extends Entity<ID>, ID = TEntity["id"]>({
         e.preventDefault();
         clickHandler()
       }}>
-        {entityAction.icon}
-        {entityAction.label}
+        {icon}
+        {label}
       </DropdownMenuItem>
       <entityAction.actionComponent
         entity={entity}
