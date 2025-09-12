@@ -1,4 +1,4 @@
-import {Countable, Creatable, CrudOperations, Deletable, Entity, Existable, Findable, Page, Pageable, PageQuery, PageQueryBase, ReadOperations, TypeCrudOperations, TypeReadOperation, TypeWriteOperation, Updatable, WriteOperations} from "@/lib/crud";
+import type {Countable, Creatable, CrudOperations, Deletable, Entity, Existable, Findable, Page, Pageable, PageQuery, PageQueryBase, ReadOperations, TypeCrudOperations, TypeReadOperation, TypeWriteOperation, Updatable, WriteOperations} from "@/lib/crud";
 import {Axios, type AxiosRequestConfig} from "axios";
 import {parseError, parseErrorOrValidationErrors} from "@/lib/errors";
 import {fail, succeed} from "./result";

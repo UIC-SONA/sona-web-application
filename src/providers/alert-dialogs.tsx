@@ -1,6 +1,6 @@
 "use client";
 
-import React, {ReactNode, useCallback, useEffect, useState} from "react";
+import {type ReactNode, useCallback, useEffect, useState} from "react";
 import {AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,} from "@/components/ui/alert-dialog";
 import {CircleAlertIcon, CircleCheckBigIcon, CircleHelpIcon, CircleXIcon, InfoIcon, LoaderCircleIcon} from "lucide-react";
 

@@ -1,7 +1,7 @@
-import {PropsWithChildren, ReactNode} from "react";
+import type {PropsWithChildren, ReactNode} from "react";
 import {SidebarInset, SidebarProvider} from "@/components/ui/sidebar";
 import {AppSidebar} from "@/components/design/sidebar/app-sidebar";
-import {MenuGroup} from "@/components/design/sidebar/app-sidebar-main-menu";
+import type {MenuGroup} from "@/components/design/sidebar/app-sidebar-main-menu";
 
 
 export interface DashboardLayoutProps extends PropsWithChildren {

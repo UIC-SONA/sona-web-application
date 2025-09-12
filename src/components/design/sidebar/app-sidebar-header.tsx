@@ -1,11 +1,6 @@
-import {
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem
-} from "@/components/ui/sidebar";
+import {SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem} from "@/components/ui/sidebar";
 import AppIcon from "@/components/design/app-icon";
-import {ReactNode} from "react";
+import type {ReactNode} from "react";
 
 
 export interface AppSidebarHeaderProps {

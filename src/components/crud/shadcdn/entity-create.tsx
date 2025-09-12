@@ -1,6 +1,6 @@
 import type {Entity} from "@/lib/crud";
 import type {FieldValues} from "react-hook-form";
-import {CreateProps, EntityActionProps} from "@/components/crud/entity-crud";
+import type {CreateProps, EntityActionProps} from "@/components/crud/entity-crud";
 import {useEntityCreate} from "@/components/crud/use-entity-create";
 import {SaveIcon} from "lucide-react";
 import {FormDialog} from "@/components/crud/shadcdn/form-dialog";

@@ -28,7 +28,7 @@ function getPayloadError(error: unknown): unknown {
   if (isAxiosError(error)) {
     const response = error.response;
     if (response) return response.data;
-    return {title: "Error", detail: error.cause?.message ?? error.message,}
+    return {title: "Error", detail: error.cause ?? error.message,}
   }
   return error;
 }

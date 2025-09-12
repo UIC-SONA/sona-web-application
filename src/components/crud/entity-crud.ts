@@ -7,11 +7,10 @@
  * - Compatible con React Hook Form y TanStack Table
  * - Fácil de testear y mantener
  */
-import {type ComponentType, type ReactNode, Ref} from "react";
+import type {ComponentType, ReactNode, Ref} from "react";
 import type {Creatable, Deletable, Entity, Findable, Pageable, Updatable} from "@/lib/crud";
 import type {DefaultValues, FieldValues, Resolver, UseFormReturn} from "react-hook-form";
-import {ColumnDef, ColumnFilter, RowData, TableState} from "@tanstack/react-table";
-
+import type {ColumnDef, ColumnFilter, RowData, TableState} from "@tanstack/react-table";
 
 /**
  * Props utilizadas en una acción sobre una entidad, como edición o eliminación.

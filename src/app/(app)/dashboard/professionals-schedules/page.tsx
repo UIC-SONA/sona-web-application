@@ -36,16 +36,16 @@ export default function Page() {
   const [schedule, setSchedule] = useState<ProfessionalSchedule | null>(null);
   const [oldSchedule, setOldSchedule] = useState<ProfessionalSchedule | null>(null);
   
-  const schedulesQueryKey = [professional?.id, range.from, range.to];
+  const suffixQueryKey = [professional?.id, range.from, range.to];
   
   const schedulesQuery = useQuery<ProfessionalSchedule[]>({
-    queryKey: ['professional-schedules', ...schedulesQueryKey],
+    queryKey: ['professional-schedules', ...suffixQueryKey],
     queryFn: () => findProfessionalScheduleByProfessional(professional!.id, range.from, range.to),
     enabled: !!professional,
   })
   
   const appointmentsQuery = useQuery<AppointmentsRange[]>({
-    queryKey: ['appointments-ranges', ...schedulesQueryKey],
+    queryKey: ['appointments-ranges', ...suffixQueryKey],
     queryFn: () => findAppointmentsRangesByProfessionalAction(professional!.id, range.from, range.to),
     enabled: !!professional,
   })
@@ -70,21 +70,21 @@ export default function Page() {
   }
   
   const addSchedules = (newSchedules: ProfessionalSchedule[]) => {
-    queryClient.setQueryData<ProfessionalSchedule[]>(schedulesQueryKey, (old) => {
+    queryClient.setQueryData<ProfessionalSchedule[]>(suffixQueryKey, (old) => {
       if (!old) return newSchedules;
       return [...old, ...newSchedules];
     });
   }
   
   const removeSchedule = (schedule: ProfessionalSchedule) => {
-    queryClient.setQueryData<ProfessionalSchedule[]>(schedulesQueryKey, (old) => {
+    queryClient.setQueryData<ProfessionalSchedule[]>(suffixQueryKey, (old) => {
       if (!old) return [];
       return old.filter((s) => s.id !== schedule.id);
     });
   }
   
   const updateSchedule = (schedule: ProfessionalSchedule) => {
-    queryClient.setQueryData<ProfessionalSchedule[]>(schedulesQueryKey, (old) => {
+    queryClient.setQueryData<ProfessionalSchedule[]>(suffixQueryKey, (old) => {
       if (!old) return [];
       return old.map((s) => s.id === schedule.id ? schedule : s);
     });
@@ -102,9 +102,6 @@ export default function Page() {
   const handleEventChange = (info: EventChangeArg) => {
     const {start, end, extendedProps} = info.event;
     if (!start || !end || !extendedProps) return;
-    
-    console.log("Start", start);
-    console.log("End", end);
     
     const schedule = extendedProps.schedule;
     if (schedule) {
@@ -140,14 +137,12 @@ export default function Page() {
               className="w-full"
               value={professional}
               onSelect={setProfessional}
-              queryFn={fromPage(async (search) => {
-                return await pageUsersAction({
-                  search,
-                  page: 0,
-                  size: 15,
-                  query: `authorities=in=(${Authority.MEDICAL_PROFESSIONAL},${Authority.LEGAL_PROFESSIONAL})`
-                });
-              })}
+              queryFn={fromPage(async (search) => await pageUsersAction({
+                search,
+                page: 0,
+                size: 15,
+                query: `authorities=in=(${Authority.MEDICAL_PROFESSIONAL},${Authority.LEGAL_PROFESSIONAL})`
+              }))}
               toOption={(professional) => ({
                 value: professional.id.toString(),
                 label: `${professional.firstName} ${professional.lastName}`

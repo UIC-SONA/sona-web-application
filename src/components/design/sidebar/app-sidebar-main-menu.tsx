@@ -2,7 +2,7 @@ import {ChevronRight} from "lucide-react"
 import {Collapsible, CollapsibleContent, CollapsibleTrigger,} from "@/components/ui/collapsible"
 import {SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem,} from "@/components/ui/sidebar"
 import Link from "next/link";
-import {ReactNode} from "react";
+import type {ReactNode} from "react";
 
 export interface MenuItem {
   title: string

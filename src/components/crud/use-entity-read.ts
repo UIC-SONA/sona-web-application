@@ -1,5 +1,5 @@
 import type {Entity, Findable, Page, Pageable, PageDetails} from "@/lib/crud";
-import {type ColumnDef, ColumnFilter, ColumnFiltersState, getCoreRowModel, HeaderGroup, PaginationState, SortingState, type Table, TableState, type Updater, useReactTable} from "@tanstack/react-table";
+import {type ColumnDef, type ColumnFilter, type ColumnFiltersState, getCoreRowModel, type HeaderGroup, type PaginationState, type SortingState, type Table, type TableState, type Updater, useReactTable} from "@tanstack/react-table";
 import {type Dispatch, type SetStateAction, useCallback, useEffect, useMemo, useState} from "react";
 import type {ErrorDescription} from "@/lib/errors";
 import {parsePageQuery} from "@/components/crud/entity-crud-utils";

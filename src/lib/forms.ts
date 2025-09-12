@@ -1,6 +1,5 @@
-import {FieldValues, Path, UseFormReturn} from "react-hook-form";
-import {ErrorDescription, ValidationError} from "@/lib/errors";
-
+import type {FieldValues, Path, UseFormReturn} from "react-hook-form";
+import type {ErrorDescription, ValidationError} from "@/lib/errors";
 
 export function setFormErrors<TFieldValues extends FieldValues = FieldValues>(form: UseFormReturn<TFieldValues>, error: ErrorDescription | ValidationError[]): void {
   if (Array.isArray(error)) {
