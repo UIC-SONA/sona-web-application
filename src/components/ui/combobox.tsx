@@ -4,11 +4,10 @@ import {Button} from '@/components/ui/button';
 import {Command, CommandEmpty, CommandGroup, CommandInput, CommandItem} from '@/components/ui/command';
 import {Popover, PopoverContent, PopoverTrigger} from '@/components/ui/popover';
 import {ScrollArea} from '@/components/ui/scroll-area';
-import React, {ComponentProps, PropsWithChildren, useCallback, useEffect, useState} from 'react';
-import type {ClassValue} from 'clsx';
-import {Page} from "@/lib/crud";
-import {AwaitResult, unwrap} from "@/lib/result";
-import {ErrorDescription, parseError} from "@/lib/errors";
+import {type ComponentProps, type  PropsWithChildren, SyntheticEvent, useCallback, useEffect, useState} from 'react';
+import type {Page} from "@/lib/crud";
+import {type  AwaitResult, unwrap} from "@/lib/result";
+import {type ErrorDescription, parseError} from "@/lib/errors";
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 import {useQuery} from "@tanstack/react-query";
 
@@ -37,7 +36,7 @@ type Serializable = number | string | boolean | undefined | null | symbol | obje
  *
  * @template T Tipo del valor seleccionable (serializable)
  */
-interface ComboboxBaseProps<T extends Serializable> {
+interface ComboboxBaseProps<T extends Serializable> extends Omit<ComponentProps<typeof Button>, "value" | "onSearch" | "onSelect" | "children"> {
   /**
    * Valor actualmente seleccionado.
    * Puede ser un valor literal o una función que determine si un ítem de la lista es el seleccionado.
@@ -85,8 +84,6 @@ interface ComboboxBaseProps<T extends Serializable> {
   /** Texto o contenido mostrado si no hay selección */
   pleceholder?: string;
   
-  /** Clase adicional para el botón del combobox */
-  className?: ClassValue;
   
   /**
    * Nombre del combobox, usado para accesibilidad y pruebas.
@@ -111,7 +108,7 @@ interface ComboboxBaseProps<T extends Serializable> {
   error: ErrorDescription | null;
   
   /** Callback llamado tras el debounce al escribir en búsqueda */
-  onSearchDebounce?: (search: string) => void;
+  onSearch?: (search: string) => void;
   
   /** Si el combobox está abierto */
   open: boolean;
@@ -136,22 +133,27 @@ function ComboboxBase<T extends Serializable>({
   loadingText = 'Cargando...',
   loading = false,
   error = null,
-  onSearchDebounce,
+  onSearch,
   open,
   onOpenChange,
   name,
-  id
+  id,
+  ...props
 }: Readonly<ComboboxBaseProps<T>>) {
   
   const [search, setSearch] = useState('');
   
   useEffect(() => {
-    if (!onSearchDebounce) return;
-    const handler = setTimeout(() => onSearchDebounce(search), debounceTime);
+    if (!onSearch) return;
+    if (debounceTime === 0) {
+      onSearch(search);
+      return;
+    }
+    const handler = setTimeout(() => onSearch(search), debounceTime);
     return () => clearTimeout(handler);
-  }, [debounceTime, onSearchDebounce, search]);
+  }, [debounceTime, onSearch, search]);
   
-  const handleUnselect = (e: React.SyntheticEvent<HTMLDivElement>) => {
+  const handleUnselect = (e: SyntheticEvent<HTMLDivElement>) => {
     e.stopPropagation();
     onSelect(null);
   };
@@ -178,13 +180,14 @@ function ComboboxBase<T extends Serializable>({
           type='button'
           aria-expanded={open}
           className={cn('justify-between', className)}
+          {...props}
         >
           {selected ? toOption(selected).label : <p className='text-muted-foreground text-sm'>{pleceholder}</p>}
           {selected ? <XCircle onClick={handleUnselect}/> : <ChevronsUpDown className='h-4 w-4'/>}
         </Button>
       </PopoverTrigger>
       <PopoverContent style={popOverStyles} className='p-0'>
-        <Command>
+        <Command shouldFilter={false}>
           <CommandInput
             name={name}
             value={search}
@@ -227,30 +230,59 @@ function ComboboxBase<T extends Serializable>({
 /**
  * Props para el `Combobox` local (sin datos remotos).
  */
-export type ComboboxProps<T extends Serializable> = Omit<ComboboxBaseProps<T>,
+export interface ComboboxProps<T extends Serializable> extends Omit<ComboboxBaseProps<T>,
   'debounceTime' |
   'loadingText' |
   'loading' |
   'error' |
-  'onSearchDebounce' |
+  'onSearch' |
   'open' |
   'onOpenChange'
->;
+> {
+  searchFn?: (search: string, item: T) => boolean;
+}
 
 
-export function Combobox<T extends Serializable>(props: Readonly<ComboboxProps<T>>) {
+export function Combobox<T extends Serializable>({searchFn = defaultSearchFn, items, ...props}: Readonly<ComboboxProps<T>>) {
   
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const [filteredItems, setFilteredItems] = useState<T[]>(items);
+  
+  useEffect(() => {
+    if (search.trim() === '') {
+      setFilteredItems(items);
+    } else {
+      setFilteredItems(items.filter(item => searchFn(search, item)));
+    }
+  }, [items, search, searchFn]);
   
   return (
     <ComboboxBase<T>
+      items={filteredItems}
       open={open}
       onOpenChange={setOpen}
+      onSearch={setSearch}
       {...props}
       loading={false}
       error={null}
+      debounceTime={0}
     />
   )
+}
+
+function defaultSearchFn<T>(search: string, item: T): boolean {
+  if (item == null) return false;
+  if (typeof item === 'string' || typeof item === 'number' || typeof item === 'boolean') {
+    return item.toString().toLowerCase().includes(search.toLowerCase());
+  }
+  if (typeof item === 'object') {
+    return Object.values(item).some(value => {
+      if (value == null) return false;
+      return value.toString().toLowerCase().includes(search.toLowerCase());
+    });
+  }
+  return false;
 }
 
 /**
@@ -263,7 +295,7 @@ type ComboboxInternalStateProps<T extends Serializable> = Omit<ComboboxBaseProps
   'items' |
   'loading' |
   'error' |
-  'onSearchDebounce' |
+  'onSearch' |
   'open' |
   'onOpenChange'
 >
@@ -276,7 +308,7 @@ export interface ComboboxRemoteProps<T extends Serializable> extends ComboboxInt
    * Función que obtiene ítems de forma asincrónica.
    * El string es el término de búsqueda.
    */
-  fetchItems: (search?: string) => Promise<T[]>;
+  fetchItems: (search: string) => Promise<T[]>;
 }
 
 export function ComboboxRemote<T extends Serializable>({fetchItems, ...props}: Readonly<ComboboxRemoteProps<T>>) {
@@ -285,18 +317,18 @@ export function ComboboxRemote<T extends Serializable>({fetchItems, ...props}: R
   const [items, setItems] = useState<T[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<ErrorDescription | null>(null);
-  const [debounceSearch, setDebounceSearch] = useState("");
+  const [search, setSearch] = useState("");
   
   const fetch = useCallback(() => {
     setLoading(true);
-    fetchItems(debounceSearch)
+    fetchItems(search)
     .then(async (items) => {
       setItems(items);
       setError(null);
     })
     .catch((err) => setError(parseError(err)))
     .finally(() => setLoading(false));
-  }, [fetchItems, debounceSearch]);
+  }, [fetchItems, search]);
   
   useEffect(() => {
     if (open) fetch();
@@ -307,7 +339,7 @@ export function ComboboxRemote<T extends Serializable>({fetchItems, ...props}: R
       items={items}
       loading={loading}
       error={error}
-      onSearchDebounce={setDebounceSearch}
+      onSearch={setSearch}
       open={open}
       onOpenChange={setOpen}
       {...props}
@@ -328,17 +360,17 @@ export interface ComboboxQueryProps<T extends Serializable> extends ComboboxInte
   /**
    * Función de consulta que retorna una lista de ítems.
    */
-  queryFn: (search?: string) => Promise<T[]>;
+  queryFn: (search: string) => Promise<T[]>;
 }
 
 export function ComboboxQuery<T extends Serializable>({queryKey, queryFn, ...props}: Readonly<ComboboxQueryProps<T>>) {
   
   const [open, setOpen] = useState(false);
-  const [debounceSearch, setDebounceSearch] = useState("");
+  const [search, setSearch] = useState("");
   
   const query = useQuery<T[]>({
-    queryKey: [...queryKey, debounceSearch],
-    queryFn: async () => await queryFn(debounceSearch),
+    queryKey: [...queryKey, search],
+    queryFn: async () => await queryFn(search),
     enabled: open,
     placeholderData: [],
     staleTime: 1000 * 60,
@@ -355,7 +387,7 @@ export function ComboboxQuery<T extends Serializable>({queryKey, queryFn, ...pro
       items={items ?? []}
       loading={loading}
       error={error}
-      onSearchDebounce={setDebounceSearch}
+      onSearch={setSearch}
       open={open}
       onOpenChange={setOpen}
       {...props}

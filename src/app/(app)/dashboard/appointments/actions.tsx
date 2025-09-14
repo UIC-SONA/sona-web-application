@@ -1,7 +1,9 @@
-import {restRead} from "@/lib/rest-crud";
+import {pageQueryToParams, restRead} from "@/lib/rest-crud";
 import {client} from "@/lib/http/axios-client";
 import {Appointment, AppointmentsRange} from "@/app/(app)/dashboard/appointments/definitions";
 import {CalendarDate, parseDate, parseDateTime} from "@internationalized/date";
+import {attempt} from "@/lib/result";
+import {Query} from "@/lib/crud";
 
 /* eslint-disable  @typescript-eslint/no-explicit-any */
 function entityConverter(appointment: any): Appointment {
@@ -29,6 +31,13 @@ const read = restRead(client, resource, {
 
 export const findAppointmentAction = read.find;
 export const pageAppointmentsAction = read.page;
+
+export const listAppointmentsAction = (query: Query) => attempt(async () => {
+  const response = await client.get<Appointment[]>(`${resource}/list`, {
+    params: pageQueryToParams(query),
+  });
+  return response.data.map(entityConverter);
+});
 
 export const findAppointmentsRangesByProfessionalAction = async (professionalId: number, from: CalendarDate, to: CalendarDate) => {
   const response = await client.get<[]>(

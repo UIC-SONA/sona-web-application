@@ -32,7 +32,7 @@ export interface UserDto {
   password: string | undefined;
 }
 
-export interface Users {
+export interface UsersById {
   [userId: number]: User;
 }
 

@@ -70,21 +70,21 @@ export default function Page() {
   }
   
   const addSchedules = (newSchedules: ProfessionalSchedule[]) => {
-    queryClient.setQueryData<ProfessionalSchedule[]>(suffixQueryKey, (old) => {
+    queryClient.setQueryData<ProfessionalSchedule[]>(['professional-schedules', ...suffixQueryKey], (old) => {
       if (!old) return newSchedules;
       return [...old, ...newSchedules];
     });
   }
   
   const removeSchedule = (schedule: ProfessionalSchedule) => {
-    queryClient.setQueryData<ProfessionalSchedule[]>(suffixQueryKey, (old) => {
+    queryClient.setQueryData<ProfessionalSchedule[]>(['professional-schedules', ...suffixQueryKey], (old) => {
       if (!old) return [];
       return old.filter((s) => s.id !== schedule.id);
     });
   }
   
   const updateSchedule = (schedule: ProfessionalSchedule) => {
-    queryClient.setQueryData<ProfessionalSchedule[]>(suffixQueryKey, (old) => {
+    queryClient.setQueryData<ProfessionalSchedule[]>(['professional-schedules', ...suffixQueryKey], (old) => {
       if (!old) return [];
       return old.map((s) => s.id === schedule.id ? schedule : s);
     });
@@ -133,7 +133,7 @@ export default function Page() {
         <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-5 gap-4">
           <div className="col-span-1 sm:col-span-2 md:col-span-3 lg:col-span-4">
             <ComboboxQuery<User>
-              queryKey={['users']}
+              queryKey={['users', 'professionals']}
               className="w-full"
               value={professional}
               onSelect={setProfessional}

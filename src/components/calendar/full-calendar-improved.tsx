@@ -1,12 +1,12 @@
 import "@/styles/calendar.css";
-import {DayCellContentArg, DayHeaderContentArg, EventContentArg,} from "@fullcalendar/core/index.js";
+import {DayCellContentArg, DayHeaderContentArg, EventContentArg,} from "@fullcalendar/core";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import listPlugin from "@fullcalendar/list";
 import multiMonthPlugin from "@fullcalendar/multimonth";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
-import {ComponentProps, forwardRef} from "react";
+import {ComponentProps, forwardRef, Fragment} from "react";
 import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from "@/components/ui/tooltip";
 import {cn} from "@/lib/utils";
 
@@ -23,9 +23,9 @@ type DayRenderProps = {
 };
 
 const FullCalendarImproved = forwardRef<FullCalendar, ComponentProps<typeof FullCalendar>>((props, ref) => {
-
+    
     const {datesSet, ...rest} = props;
-
+    
     return <FullCalendar
       ref={ref}
       timeZone="local"
@@ -77,9 +77,9 @@ FullCalendarImproved.displayName = "FullCalendarImproved";
 
 const EventItem = ({info}: EventItemProps) => {
   const {event, backgroundColor, textColor} = info;
-  const {tooltipContent, className} = event.extendedProps;
+  const {tooltipContent, wrapper: Wrapper = Fragment, className} = event.extendedProps;
   const [left, right] = info.timeText.split(" - ");
-
+  
   const MonthViewContent = () => (
     <div
       // style={{backgroundColor: backgroundColor, color: textColor}}
@@ -92,7 +92,7 @@ const EventItem = ({info}: EventItemProps) => {
       <p className="text-[0.5rem] sm:text-[0.6rem] md:text-xs">{right}</p>
     </div>
   );
-
+  
   const WeekViewContent = () => (
     <div
       style={{backgroundColor: backgroundColor, color: textColor}}
@@ -106,33 +106,40 @@ const EventItem = ({info}: EventItemProps) => {
       </p>
     </div>
   );
-
-  return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div
-            className="overflow-hidden"
-          >
-            {info.view.type === "dayGridMonth" ? <MonthViewContent/> : <WeekViewContent/>}
-          </div>
-        </TooltipTrigger>
-        <TooltipContent side="bottom" {...(tooltipContent?.props || {})}>
-          {(tooltipContent?.child) ? tooltipContent.child : (
-            <div className="flex flex-col space-y-2 ">
-              <p className="font-semibold">{event.title}</p>
-              <p>{`${left} - ${right}`}</p>
-            </div>
-          )}
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
+  
+  if (tooltipContent) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Wrapper>
+              <div className="overflow-hidden">
+                {info.view.type === "dayGridMonth" ? <MonthViewContent/> : <WeekViewContent/>}
+              </div>
+            </Wrapper>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" {...(tooltipContent.props || {})}>
+            {(tooltipContent.child) ? tooltipContent.child : (
+              <div className="flex flex-col space-y-2 ">
+                <p className="font-semibold">{event.title}</p>
+                <p>{`${left} - ${right}`}</p>
+              </div>
+            )}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+  return <Wrapper>
+    <div className="overflow-hidden">
+      {info.view.type === "dayGridMonth" ? <MonthViewContent/> : <WeekViewContent/>}
+    </div>
+  </Wrapper>;
 };
 
 const DayHeader = ({info}: DayHeaderProps) => {
   const [weekday] = info.text.split(" ");
-
+  
   if (info.view.type == "timeGridDay") {
     return (
       <div className="flex items-center h-full overflow-hidden">
@@ -147,8 +154,9 @@ const DayHeader = ({info}: DayHeaderProps) => {
         </div>
       </div>
     );
+    
   }
-
+  
   if (info.view.type == "timeGridWeek") {
     return (
       <div className="flex items-center h-full overflow-hidden">
@@ -169,7 +177,7 @@ const DayHeader = ({info}: DayHeaderProps) => {
       </div>
     );
   }
-
+  
   return (
     <div className="flex items-center h-full overflow-hidden">
       <div className="flex flex-col rounded-sm">

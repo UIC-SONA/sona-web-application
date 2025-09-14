@@ -1,11 +1,11 @@
 "use client"
 
 import * as React from "react"
-import { useEffect } from "react"
-import { Command as CommandPrimitive, useCommandState } from "cmdk"
-import { XIcon } from "lucide-react"
+import {useEffect} from "react"
+import {Command as CommandPrimitive, useCommandState} from "cmdk"
+import {XIcon} from "lucide-react"
 
-import { cn } from "@/lib/utils"
+import {cn} from "@/lib/utils"
 import {
   Command,
   CommandGroup,
@@ -19,9 +19,11 @@ export interface Option {
   disable?: boolean
   /** fixed option that can't be removed. */
   fixed?: boolean
+  
   /** Group the options by providing key. */
   [key: string]: string | boolean | undefined
 }
+
 interface GroupOption {
   [key: string]: Option[]
 }
@@ -92,15 +94,15 @@ export interface MultipleSelectorRef {
 
 export function useDebounce<T>(value: T, delay?: number): T {
   const [debouncedValue, setDebouncedValue] = React.useState<T>(value)
-
+  
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedValue(value), delay || 500)
-
+    
     return () => {
       clearTimeout(timer)
     }
   }, [value, delay])
-
+  
   return debouncedValue
 }
 
@@ -113,7 +115,7 @@ function transToGroupOption(options: Option[], groupBy?: string) {
       "": options,
     }
   }
-
+  
   const groupOption: GroupOption = {}
   options.forEach((option) => {
     const key = (option[groupBy] as string) || ""
@@ -127,7 +129,7 @@ function transToGroupOption(options: Option[], groupBy?: string) {
 
 function removePickedOption(groupOption: GroupOption, picked: Option[]) {
   const cloneOption = JSON.parse(JSON.stringify(groupOption)) as GroupOption
-
+  
   for (const [key, value] of Object.entries(cloneOption)) {
     cloneOption[key] = value.filter(
       (val) => !picked.find((p) => p.value === val.value)
@@ -152,9 +154,9 @@ const CommandEmpty = ({
   ...props
 }: React.ComponentProps<typeof CommandPrimitive.Empty>) => {
   const render = useCommandState((state) => state.filtered.count === 0)
-
+  
   if (!render) return null
-
+  
   return (
     <div
       className={cn("px-2 py-4 text-center text-sm", className)}
@@ -197,14 +199,14 @@ const MultipleSelector = ({
   const [onScrollbar, setOnScrollbar] = React.useState(false)
   const [isLoading, setIsLoading] = React.useState(false)
   const dropdownRef = React.useRef<HTMLDivElement>(null) // Added this
-
+  
   const [selected, setSelected] = React.useState<Option[]>(value || [])
   const [options, setOptions] = React.useState<GroupOption>(
     transToGroupOption(arrayDefaultOptions, groupBy)
   )
   const [inputValue, setInputValue] = React.useState("")
   const debouncedSearchTerm = useDebounce(inputValue, delay || 500)
-
+  
   const handleClickOutside = (event: MouseEvent | TouchEvent) => {
     if (
       dropdownRef.current &&
@@ -216,7 +218,7 @@ const MultipleSelector = ({
       inputRef.current.blur()
     }
   }
-
+  
   const handleUnselect = React.useCallback(
     (option: Option) => {
       const newOptions = selected.filter((s) => s.value !== option.value)
@@ -225,7 +227,7 @@ const MultipleSelector = ({
     },
     [onChange, selected]
   )
-
+  
   const handleKeyDown = React.useCallback(
     (e: React.KeyboardEvent<HTMLDivElement>) => {
       const input = inputRef.current
@@ -247,7 +249,7 @@ const MultipleSelector = ({
     },
     [handleUnselect, selected]
   )
-
+  
   useEffect(() => {
     if (open) {
       document.addEventListener("mousedown", handleClickOutside)
@@ -256,19 +258,19 @@ const MultipleSelector = ({
       document.removeEventListener("mousedown", handleClickOutside)
       document.removeEventListener("touchend", handleClickOutside)
     }
-
+    
     return () => {
       document.removeEventListener("mousedown", handleClickOutside)
       document.removeEventListener("touchend", handleClickOutside)
     }
   }, [open])
-
+  
   useEffect(() => {
     if (value) {
       setSelected(value)
     }
   }, [value])
-
+  
   useEffect(() => {
     /** If `onSearch` is provided, do not trigger options updated. */
     if (!arrayOptions || onSearch) {
@@ -279,66 +281,66 @@ const MultipleSelector = ({
       setOptions(newOption)
     }
   }, [arrayDefaultOptions, arrayOptions, groupBy, onSearch, options])
-
+  
   useEffect(() => {
     /** sync search */
-
+    
     const doSearchSync = () => {
       const res = onSearchSync?.(debouncedSearchTerm)
       setOptions(transToGroupOption(res || [], groupBy))
     }
-
+    
     const exec = async () => {
       if (!onSearchSync || !open) return
-
+      
       if (triggerSearchOnFocus) {
         doSearchSync()
       }
-
+      
       if (debouncedSearchTerm) {
         doSearchSync()
       }
     }
-
+    
     void exec()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearchTerm, groupBy, open, triggerSearchOnFocus])
-
+  
   useEffect(() => {
     /** async search */
-
+    
     const doSearch = async () => {
       setIsLoading(true)
       const res = await onSearch?.(debouncedSearchTerm)
       setOptions(transToGroupOption(res || [], groupBy))
       setIsLoading(false)
     }
-
+    
     const exec = async () => {
       if (!onSearch || !open) return
-
+      
       if (triggerSearchOnFocus) {
         await doSearch()
       }
-
+      
       if (debouncedSearchTerm) {
         await doSearch()
       }
     }
-
+    
     void exec()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearchTerm, groupBy, open, triggerSearchOnFocus])
-
+  
   const CreatableItem = () => {
     if (!creatable) return undefined
     if (
-      isOptionsExist(options, [{ value: inputValue, label: inputValue }]) ||
+      isOptionsExist(options, [{value: inputValue, label: inputValue}]) ||
       selected.find((s) => s.value === inputValue)
     ) {
       return undefined
     }
-
+    
     const Item = (
       <CommandItem
         value={inputValue}
@@ -353,7 +355,7 @@ const MultipleSelector = ({
             return
           }
           setInputValue("")
-          const newOptions = [...selected, { value, label: value }]
+          const newOptions = [...selected, {value, label: value}]
           setSelected(newOptions)
           onChange?.(newOptions)
         }}
@@ -361,23 +363,23 @@ const MultipleSelector = ({
         {`Create "${inputValue}"`}
       </CommandItem>
     )
-
+    
     // For normal creatable
     if (!onSearch && inputValue.length > 0) {
       return Item
     }
-
+    
     // For async search creatable. avoid showing creatable item before loading at first.
     if (onSearch && debouncedSearchTerm.length > 0 && !isLoading) {
       return Item
     }
-
+    
     return undefined
   }
-
+  
   const EmptyItem = React.useCallback(() => {
     if (!emptyIndicator) return undefined
-
+    
     // For async search that showing emptyIndicator
     if (onSearch && !creatable && Object.keys(options).length === 0) {
       return (
@@ -386,21 +388,21 @@ const MultipleSelector = ({
         </CommandItem>
       )
     }
-
+    
     return <CommandEmpty>{emptyIndicator}</CommandEmpty>
   }, [creatable, emptyIndicator, onSearch, options])
-
+  
   const selectables = React.useMemo<GroupOption>(
     () => removePickedOption(options, selected),
     [options, selected]
   )
-
+  
   /** Avoid Creatable Selector freezing or lagging when paste a long string. */
   const commandFilter = React.useCallback(() => {
     if (commandProps?.filter) {
       return commandProps.filter
     }
-
+    
     if (creatable) {
       return (value: string, search: string) => {
         return value.toLowerCase().includes(search.toLowerCase()) ? 1 : -1
@@ -409,7 +411,7 @@ const MultipleSelector = ({
     // Using default filter in `cmdk`. We don&lsquo;t have to provide it.
     return undefined
   }, [creatable, commandProps?.filter])
-
+  
   return (
     <Command
       ref={dropdownRef}
@@ -450,7 +452,7 @@ const MultipleSelector = ({
               <div
                 key={option.value}
                 className={cn(
-                  "animate-fadeIn bg-background text-secondary-foreground hover:bg-background relative inline-flex h-7 cursor-default items-center rounded-md border ps-2 pe-7 pl-2 text-xs font-medium transition-all disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 data-fixed:pe-2",
+                  "animate-fadeIn bg-background hover:bg-background relative inline-flex h-7 cursor-default items-center rounded-md border ps-2 pe-7 pl-2 text-xs font-medium transition-all disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 data-fixed:pe-2",
                   badgeClassName
                 )}
                 data-fixed={option.fixed}
@@ -471,7 +473,7 @@ const MultipleSelector = ({
                   onClick={() => handleUnselect(option)}
                   aria-label="Remove"
                 >
-                  <XIcon size={14} aria-hidden="true" />
+                  <XIcon size={14} aria-hidden="true"/>
                 </button>
               </div>
             )
@@ -526,11 +528,11 @@ const MultipleSelector = ({
                 disabled ||
                 selected.length < 1 ||
                 selected.filter((s) => s.fixed).length === selected.length) &&
-                "hidden"
+              "hidden"
             )}
             aria-label="Clear all"
           >
-            <XIcon size={16} aria-hidden="true" />
+            <XIcon size={16} aria-hidden="true"/>
           </button>
         </div>
       </div>
@@ -563,7 +565,7 @@ const MultipleSelector = ({
                   {EmptyItem()}
                   {CreatableItem()}
                   {!selectFirstItem && (
-                    <CommandItem value="-" className="hidden" />
+                    <CommandItem value="-" className="hidden"/>
                   )}
                   {Object.entries(selectables).map(([key, dropdowns]) => (
                     <CommandGroup
@@ -595,7 +597,7 @@ const MultipleSelector = ({
                               className={cn(
                                 "cursor-pointer",
                                 option.disable &&
-                                  "pointer-events-none cursor-not-allowed opacity-50"
+                                "pointer-events-none cursor-not-allowed opacity-50"
                               )}
                             >
                               {option.label}

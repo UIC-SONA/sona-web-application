@@ -3,7 +3,13 @@ import {QueryClient} from "@tanstack/query-core";
 import {QueryClientProvider as QueryClientProviderComponente} from "@tanstack/react-query";
 import {PropsWithChildren} from "react";
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60,
+    }
+  }
+})
 
 export function QueryClientProvider({children}: Readonly<PropsWithChildren>) {
   return <QueryClientProviderComponente client={queryClient}>

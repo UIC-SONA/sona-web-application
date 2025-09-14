@@ -6,6 +6,7 @@ import {DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, 
 import {SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar,} from "@/components/ui/sidebar"
 import {useLogout} from "@/hooks/use-logout";
 import {useMemo} from "react";
+import {useRouter} from "next/navigation";
 
 export interface AppSidebarUserMenuProps {
   user: {
@@ -19,6 +20,7 @@ export interface AppSidebarUserMenuProps {
 export function AppSidebarUserMenu({user}: Readonly<AppSidebarUserMenuProps>) {
   const {isMobile} = useSidebar()
   const logout = useLogout()
+  const router = useRouter()
   
   const userOptions = useMemo(() => [
     {
@@ -31,10 +33,10 @@ export function AppSidebarUserMenu({user}: Readonly<AppSidebarUserMenuProps>) {
       label: "Mensajes",
       icon: <MessageSquareIcon/>,
       onClick: () => {
-        console.log("Messages clicked");
+        router.push('/chat')
       },
     }
-  ], []);
+  ], [router]);
   
   return <SidebarMenu>
     <SidebarMenuItem>

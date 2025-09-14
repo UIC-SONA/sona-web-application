@@ -79,7 +79,8 @@ export default function Page() {
         return <ModalFetchImage
           cacheKey={`tip-image-${row.original.id}`}
           fetcher={() => getTipImageAction(row.original.id)}
-          alt={row.original.title}/>
+          alt={row.original.title}
+        />
       },
     },
   ], []);

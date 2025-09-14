@@ -28,15 +28,18 @@ export type Sort = {
   direction: Direction;
 };
 
-export interface PageQueryBase {
+export interface QueryBase {
   search?: string;
   query?: string;
 }
 
-export interface PageQuery extends PageQueryBase {
+export interface Query extends QueryBase {
+  sorts?: Sort[];
+}
+
+export interface PageQuery extends Query {
   page?: number;
   size?: number;
-  sorts?: Sort[];
 }
 
 export type Findable<TEntity extends Entity<ID>, ID = TEntity['id']> = {
@@ -49,7 +52,7 @@ export type Pageable<TEntity> = {
 };
 
 export type Countable = {
-  count: (query: PageQueryBase) => AwaitResult<number, ErrorDescription>;
+  count: (query: QueryBase) => AwaitResult<number, ErrorDescription>;
 };
 
 export type Existable<ID> = {

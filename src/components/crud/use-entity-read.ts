@@ -180,10 +180,7 @@ export function useEntityRead<TEntity extends Entity<ID>, ID = TEntity['id']>({
   
   const refreshTable = useCallback(() => {
     setLoading(LoadingReadTarget.Data);
-    queryClient.invalidateQueries({
-      queryKey: [cacheKey],
-      exact: false, // permite coincidencias parciales
-    }).then();
+    queryClient.invalidateQueries({queryKey: [cacheKey],}).then();
   }, [cacheKey, queryClient]);
   
   const replaceEntity = useCallback((entity: TEntity) => {
@@ -207,6 +204,8 @@ export function useEntityRead<TEntity extends Entity<ID>, ID = TEntity['id']>({
       throw refreshed.error;
     }
   }, [findAction, replaceEntity]);
+  
+  console.log("isFetching", query.isFetching, "loading", loading);
   
   return {
     entities,

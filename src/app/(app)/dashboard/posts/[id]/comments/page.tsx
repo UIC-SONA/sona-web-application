@@ -22,6 +22,7 @@ const dateFormatter = new DateFormatter(navigator.language, {
 });
 
 export default function Page() {
+  
   const params = useParams();
   const router = useRouter();
   const columns = useMemo<ColumnDef<Comment>[]>(() => [

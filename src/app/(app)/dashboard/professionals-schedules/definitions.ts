@@ -27,14 +27,34 @@ export interface ProfessionalSchedulesDto extends ProfessionalScheduleDtoBase {
 }
 
 export const scheduleSchemaBase = z.object({
-  fromHour: z.coerce.number().min(0).max(24) as z.ZodNumber,
-  toHour: z.coerce.number().min(0).max(24) as z.ZodNumber,
-  professionalId: z.number(),
+  
+  fromHour: z
+  .coerce
+  .number({error: "La hora de inicio debe ser un número"})
+  .min(0, {error: "La hora de inicio debe ser mayor o igual a 0"})
+  .max(24, {error: "La hora de inicio debe ser menor o igual a 24"}) as z.ZodNumber,
+  
+  toHour: z
+  .coerce
+  .number({error: "La hora de fin debe ser un número"})
+  .min(0, {error: "La hora de fin debe ser mayor o igual a 0"})
+  .max(24, {error: "La hora de fin debe ser menor o igual a 24"}) as z.ZodNumber,
+  
+  professionalId: z
+  .number({error: "El profesional es obligatorio"})
+  .positive({error: "El profesional es obligatorio"})
+  
+}).refine((data) => data.toHour > data.fromHour, {
+  message: "La hora de fin debe ser mayor a la hora de inicio",
+  path: ["toHour"],
 });
 
 
-export const scheduleSchema = scheduleSchemaBase.extend({
-  date: z.instanceof(CalendarDate),
+export const scheduleSchema = scheduleSchemaBase.safeExtend({
+  
+  date: z
+  .instanceof(CalendarDate, {error: "La fecha es obligatoria"})
+  
 });
 
 export function scheduleResolver(): Resolver<ProfessionalScheduleDto> {
@@ -50,8 +70,12 @@ export function scheduleDefaultValues(entity?: ProfessionalSchedule): DefaultVal
   };
 }
 
-export const schedulesSchema = scheduleSchemaBase.extend({
-  dates: z.array(z.instanceof(CalendarDate)),
+export const schedulesSchema = scheduleSchemaBase.safeExtend({
+  
+  dates: z
+  .array(z.instanceof(CalendarDate, {error: "La fecha es obligatoria"}), {error: "Debe seleccionar al menos una fecha"})
+  .min(1, {error: "Debe seleccionar al menos una fecha"})
+  
 });
 
 export const schedulesResolver = zodResolver(schedulesSchema);

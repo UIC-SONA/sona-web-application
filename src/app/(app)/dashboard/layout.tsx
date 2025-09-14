@@ -73,7 +73,7 @@ export default async function Layout({children}: Readonly<PropsWithChildren>) {
                 },
                 {
                   title: "Calendario",
-                  path: "/appointments-calendar",
+                  path: "/dashboard/appointments-calendar",
                 },
               ]
             },

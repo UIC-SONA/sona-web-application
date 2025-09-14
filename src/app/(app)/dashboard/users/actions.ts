@@ -1,7 +1,7 @@
 import {client} from "@/lib/http/axios-client";
 import {attempt} from "@/lib/result";
 import {restCrud} from "@/lib/rest-crud";
-import {User, UserDto} from "@/app/(app)/dashboard/users/definitions";
+import {User, UserDto, UsersById} from "@/app/(app)/dashboard/users/definitions";
 
 const resource = '/user';
 
@@ -48,4 +48,22 @@ export const enableUserAction = async (id: number, enabled: boolean) => attempt(
   return response.data;
 });
 
+export const mapUsersAction = async (ids: number[]) => attempt(async () => {
+  const response = await client.get<UsersById>(
+    `${resource}/map`,
+    {
+      params: {
+        ids: ids.join(','),
+      },
+    }
+  );
+  
+  return response.data;
+})
+
+
+export const profileAction = () => attempt(async () => {
+  const response = await client.get<User>(`${resource}/profile`);
+  return response.data;
+})
 

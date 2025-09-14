@@ -1,4 +1,4 @@
-import type {Countable, Creatable, CrudOperations, Deletable, Entity, Existable, Findable, Page, Pageable, PageQuery, PageQueryBase, ReadOperations, TypeCrudOperations, TypeReadOperation, TypeWriteOperation, Updatable, WriteOperations} from "@/lib/crud";
+import type {Countable, Creatable, CrudOperations, Deletable, Entity, Existable, Findable, Page, Pageable, PageQuery, Query, QueryBase, ReadOperations, TypeCrudOperations, TypeReadOperation, TypeWriteOperation, Updatable, WriteOperations} from "@/lib/crud";
 import {Axios, type AxiosRequestConfig} from "axios";
 import {parseError, parseErrorOrValidationErrors} from "@/lib/errors";
 import {fail, succeed} from "./result";
@@ -31,22 +31,27 @@ export type RestCrudConfig<TEntity, Dto> = ReadableConfig<TEntity> & WriteableCo
 
 const getEmpty = () => ({});
 
-export function pageQueryToParamsBase({search, query}: PageQueryBase): URLSearchParams {
+export function pageQueryBaseToParams({search, query}: QueryBase): URLSearchParams {
   const params = new URLSearchParams();
   if (search) params.append("search", search);
   if (query) params.append("query", query);
   return params;
 }
 
-export function pageQueryToParams({page, size, sorts, ...base}: PageQuery): URLSearchParams {
-  const params = pageQueryToParamsBase(base);
-  if (page) params.append("page", page.toString());
-  if (size) params.append("size", size.toString());
+export function pageQueryToParams({sorts, ...base}: Query): URLSearchParams {
+  const params = pageQueryBaseToParams(base);
   if (sorts) {
     for (const sort of sorts) {
       params.append("sort", sort.property + "," + sort.direction);
     }
   }
+  return params;
+}
+
+export function pagePageQueryToParams({page, size, ...base}: PageQuery): URLSearchParams {
+  const params = pageQueryToParams(base);
+  if (page) params.append("page", page.toString());
+  if (size) params.append("size", size.toString());
   return params;
 }
 
@@ -66,7 +71,7 @@ export function restPageable<TEntity>(axios: Axios, resource: string, config: Re
       try {
         const config = await getRequestConfig(requestConfig);
         const {data} = await axios.get<Page<TEntity>>(resource, {
-          params: pageQueryToParams(query),
+          params: pagePageQueryToParams(query),
           ...config
         });
         const page = entityConverter ? {...data, content: data.content.map(entityConverter)} : data;
@@ -115,7 +120,7 @@ export function restCountable(axios: Axios, resource: string, config: WithReques
       try {
         const config = await getRequestConfig(requestConfig);
         const {data} = await axios.get<number>(`${resource}/count`, {
-          params: pageQueryToParamsBase(query),
+          params: pageQueryBaseToParams(query),
           ...config
         });
         return succeed(data);
