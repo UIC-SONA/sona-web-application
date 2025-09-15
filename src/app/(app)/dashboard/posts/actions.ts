@@ -26,10 +26,10 @@ export const pagePostsAction = pageable.page;
 export const findPostAction = findable.find;
 export const deletePostAction = deletable.delete;
 
-export const topPostsAction = () => attempt<TopPostsDto>(async () => {
+export const topPostsAction = attempt(async () => {
   const response = await client.get<any>(`${resource}/top`);
   const data = response.data;
   const mostLikedPost = data.mostLikedPost ? entityConverter(data.mostLikedPost) : null;
   const mostCommentedPost = data.mostCommentedPost ? entityConverter(data.mostCommentedPost) : null;
-  return {mostLikedPost, mostCommentedPost};
+  return {mostLikedPost, mostCommentedPost} satisfies TopPostsDto;
 });

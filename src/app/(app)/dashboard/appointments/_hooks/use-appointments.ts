@@ -4,7 +4,6 @@ import {ZONE_ID} from "@/constants";
 import {Authority, User} from "@/app/(app)/dashboard/users/definitions";
 import {Appointment, AppointmentType} from "@/app/(app)/dashboard/appointments/definitions";
 import {useQuery} from "@tanstack/react-query";
-import {unwrap} from "@/lib/result";
 import {listAppointmentsAction} from "@/app/(app)/dashboard/appointments/actions";
 import {ErrorDescription} from "@/lib/errors";
 
@@ -34,9 +33,15 @@ export const useAppointments = ({initialState}: UseAppointmentsProps = {}) => {
   
   const query = useQuery<Appointment[], ErrorDescription>({
     queryKey: ['appointments', range, professional?.id, professionalType, canceled, type],
-    queryFn: async () => unwrap(await listAppointmentsAction({
-      query: buildRsqlQuery(range, professional, professionalType, canceled, type)
-    })),
+    queryFn: async () => await listAppointmentsAction({
+      query: buildRsqlQuery(
+        range,
+        professional,
+        professionalType,
+        canceled,
+        type
+      )
+    }).unwrap(),
     enabled: range.from.compare(range.to) != 0 // Avoid initial load
   })
   

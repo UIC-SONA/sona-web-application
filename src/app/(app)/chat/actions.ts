@@ -2,6 +2,7 @@ import {ChatMessage, ChatMessageSent, ChatRoom, ReadBy, ReadMessages} from "@/ap
 import {client} from "@/lib/http/axios-client";
 import {attempt} from "@/lib/result";
 import {parseAbsoluteToLocal} from "@internationalized/date";
+import {parseErrorOrValidationErrors} from "@/lib/errors";
 
 const resource = '/chat';
 
@@ -40,7 +41,7 @@ export function parseReadMessages(data: any): ReadMessages {
   }
 }
 
-export const sendMessageAction = ({roomId, requestId, message}: { roomId: string, requestId: string, message: string }) => attempt(async () => {
+export const sendMessageAction = attempt(async ({roomId, requestId, message}: { roomId: string, requestId: string, message: string }) => {
   const response = await client.post(
     `${resource}/send/${roomId}`,
     message,
@@ -52,9 +53,9 @@ export const sendMessageAction = ({roomId, requestId, message}: { roomId: string
     }
   );
   return parseChatMessageSent(response.data);
-});
+}, parseErrorOrValidationErrors);
 
-export const sendImageAction = ({roomId, requestId, image}: { roomId: string, requestId: string, image: File }) => attempt(async () => {
+export const sendImageAction = attempt(async ({roomId, requestId, image}: { roomId: string, requestId: string, image: Blob }) => {
   const formData = new FormData();
   formData.append('image', image);
   const response = await client.post(
@@ -68,9 +69,9 @@ export const sendImageAction = ({roomId, requestId, image}: { roomId: string, re
     }
   );
   return parseChatMessageSent(response.data);
-});
+}, parseErrorOrValidationErrors);
 
-export const sendVoiceAction = ({roomId, requestId, voice}: { roomId: string, requestId: string, voice: File }) => attempt(async () => {
+export const sendVoiceAction = attempt(async ({roomId, requestId, voice}: { roomId: string, requestId: string, voice: Blob }) => {
   const formData = new FormData();
   formData.append('voice', voice);
   const response = await client.post(
@@ -84,28 +85,28 @@ export const sendVoiceAction = ({roomId, requestId, voice}: { roomId: string, re
     }
   );
   return parseChatMessageSent(response.data);
-});
+}, parseErrorOrValidationErrors);
 
-export const readMessagesAction = ({roomId, messageIds}: { roomId: string, messageIds: string[] }) => attempt(async () => {
+export const readMessagesAction = attempt(async ({roomId, messageIds}: { roomId: string, messageIds: string[] }) => {
   await client.put(`${resource}/room/${roomId}/read`, messageIds);
 });
 
-export const getChatRoomsAction = () => attempt(async () => {
+export const getChatRoomsAction = attempt(async () => {
   const response = await client.get<ChatRoom[]>(`${resource}/rooms`);
   return response.data;
 });
 
-export const getChatRoomAction = (id: string) => attempt(async () => {
+export const getChatRoomAction = attempt(async (id: string) => {
   const response = await client.get<ChatRoom>(`${resource}/room/${id}`);
   return response.data;
 });
 
-export const getRoomWithUserAction = (userId: number) => attempt(async () => {
+export const getRoomWithUserAction = attempt(async (userId: number) => {
   const response = await client.get<ChatRoom>(`${resource}/user/${userId}/room`);
   return response.data;
 });
 
-export const getChatMessagesAction = (roomId: string, chunk: number) => attempt(async () => {
+export const getChatMessagesAction = attempt(async (roomId: string, chunk: number) => {
   const response = await client.get<[]>(
     `${resource}/room/${roomId}/messages`,
     {
@@ -115,12 +116,12 @@ export const getChatMessagesAction = (roomId: string, chunk: number) => attempt(
   return response.data.map(parseChatMessage);
 });
 
-export const getLastMessageAction = (roomId: string) => attempt(async () => {
+export const getLastMessageAction = attempt(async (roomId: string) => {
   const response = await client.get<ChatMessage>(`${resource}/room/${roomId}/last-message`);
   return parseChatMessage(response.data);
 });
 
-export const chunkCountAction = (roomId: string) => attempt(async () => {
+export const chunkCountAction = attempt(async (roomId: string) => {
   const response = await client.get<number>(`${resource}/room/${roomId}/chunk-count`);
   return response.data;
-});
+})

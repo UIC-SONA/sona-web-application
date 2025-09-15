@@ -20,6 +20,7 @@ export const guards: Guards = {
   guestOnly: [
     {
       paths: [
+        "/",
         "/sign-in",
         "/sign-up",
         "/forgot-password",
@@ -30,7 +31,6 @@ export const guards: Guards = {
   authenticated: [
     {
       paths: [
-        "/",
         "/dashboard",
         "/profile",
         "/settings",

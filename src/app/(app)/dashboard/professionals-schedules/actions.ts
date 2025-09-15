@@ -30,16 +30,16 @@ const crud = restCrud<ProfessionalSchedule, ProfessionalScheduleDto, number>(cli
 export const updateProfessionalScheduleAction = crud.update;
 export const deleteProfessionalScheduleAction = crud.delete;
 
-export const createMultipleProfessionalSchedulesAction = async (data: ProfessionalSchedulesDto) => attempt(async () => {
+export const createMultipleProfessionalSchedulesAction = attempt(async (data: ProfessionalSchedulesDto) => {
   const response = await client.post<[]>(
     `${resource}/all`,
     {...data, dates: data.dates.map(d => d.toString())}
   );
   return response.data.map(entityConverter);
-})
+});
 
 
-export const findProfessionalScheduleByProfessional = async (professionalId: number, from: CalendarDate, to: CalendarDate) => {
+export const findProfessionalScheduleByProfessional = attempt(async (professionalId: number, from: CalendarDate, to: CalendarDate) => {
   const response = await client.get<ProfessionalSchedule[]>(
     `${resource}/professional/${professionalId}`,
     {
@@ -51,5 +51,5 @@ export const findProfessionalScheduleByProfessional = async (professionalId: num
   );
   
   return response.data.map(entityConverter);
-};
+});
 

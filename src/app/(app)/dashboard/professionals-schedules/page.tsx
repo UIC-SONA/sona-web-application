@@ -25,6 +25,7 @@ import {ScheduleView} from "@/app/(app)/dashboard/professionals-schedules/_compo
 import {CreateProfessionalScheduleForm} from "@/app/(app)/dashboard/professionals-schedules/_components/create-form";
 import {UpdateProfessionalScheduleForm} from "@/app/(app)/dashboard/professionals-schedules/_components/update-form";
 import {DeleteProfessionalScheduleForm} from "@/app/(app)/dashboard/professionals-schedules/_components/delete-form";
+import {ErrorDescription} from "@/lib/errors";
 
 export default function Page() {
   
@@ -38,15 +39,15 @@ export default function Page() {
   
   const suffixQueryKey = [professional?.id, range.from, range.to];
   
-  const schedulesQuery = useQuery<ProfessionalSchedule[]>({
+  const schedulesQuery = useQuery<ProfessionalSchedule[], ErrorDescription>({
     queryKey: ['professional-schedules', ...suffixQueryKey],
-    queryFn: () => findProfessionalScheduleByProfessional(professional!.id, range.from, range.to),
+    queryFn: async () => await findProfessionalScheduleByProfessional(professional!.id, range.from, range.to).unwrap(),
     enabled: !!professional,
   })
   
-  const appointmentsQuery = useQuery<AppointmentsRange[]>({
+  const appointmentsQuery = useQuery<AppointmentsRange[], ErrorDescription>({
     queryKey: ['appointments-ranges', ...suffixQueryKey],
-    queryFn: () => findAppointmentsRangesByProfessionalAction(professional!.id, range.from, range.to),
+    queryFn: async () => await findAppointmentsRangesByProfessionalAction(professional!.id, range.from, range.to).unwrap(),
     enabled: !!professional,
   })
   
@@ -137,7 +138,7 @@ export default function Page() {
               className="w-full"
               value={professional}
               onSelect={setProfessional}
-              queryFn={fromPage(async (search) => await pageUsersAction({
+              queryFn={fromPage((search) => pageUsersAction({
                 search,
                 page: 0,
                 size: 15,

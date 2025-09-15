@@ -16,7 +16,6 @@ import {StompProvider} from "@/app/(app)/chat/_providers/stomp-providers";
 import {STOMP_SERVER_URL} from "@/constants";
 import {ThemeToggle} from "@/components/ui/theme-toggle";
 import {useQuery} from "@tanstack/react-query";
-import {unwrap} from "@/lib/result";
 import {profileAction} from "@/app/(app)/dashboard/users/actions";
 import {ErrorDescription} from "@/lib/errors";
 import {useParams} from "next/navigation";
@@ -27,7 +26,7 @@ export default function Layout({children}: Readonly<PropsWithChildren>) {
   
   const query = useQuery<User, ErrorDescription>({
     queryKey: ['user', 'profile'],
-    queryFn: async () => unwrap(await profileAction())
+    queryFn: async () => await profileAction().unwrap(),
   })
   
   useEffect(() => {

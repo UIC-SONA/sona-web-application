@@ -4,7 +4,7 @@ import {Heart, LoaderCircle, MessageCircle} from "lucide-react";
 import DatePicker from "@/components/ui/date-picker";
 import {CalendarDate} from "@internationalized/date";
 import {ZONE_ID} from "@/constants";
-import {AreaData, AreaSeries, AreaSeriesPartialOptions, ChartOptions, ColorType, createChart, DeepPartial, SingleValueData} from "lightweight-charts";
+import {AreaData, AreaSeries, AreaSeriesPartialOptions, ColorType, createChart, SingleValueData} from "lightweight-charts";
 import {Card, CardContent, CardFooter, CardHeader, CardTitle} from "@/components/ui/card";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
@@ -13,8 +13,7 @@ import {useSidebar} from "@/components/ui/sidebar";
 import {BreadcrumbLayout} from "@/components/design/breadcrumb/breadcrumb-layout";
 import {Tip} from "@/app/(app)/dashboard/tips/definitions";
 import {topTipsAction} from "@/app/(app)/dashboard/tips/actions";
-import {keepPreviousData, useQuery} from "@tanstack/react-query";
-import {unwrap} from "@/lib/result";
+import {useQuery} from "@tanstack/react-query";
 import {ErrorDescription} from "@/lib/errors";
 import {TopTips} from "@/app/(app)/dashboard/_components/top-tips";
 import {Post, TopPostsDto} from "@/app/(app)/dashboard/posts/definitions";
@@ -61,7 +60,7 @@ function Tips() {
   
   const query = useQuery<Tip[], ErrorDescription>({
     queryKey: ['tips', 'top'],
-    queryFn: async () => unwrap(await topTipsAction()),
+    queryFn: async () => await topTipsAction().unwrap(),
   })
   
   return (
@@ -92,7 +91,7 @@ function TopPosts() {
   
   const query = useQuery<TopPostsDto, ErrorDescription>({
     queryKey: ['posts', 'top'],
-    queryFn: async () => unwrap(await topPostsAction()),
+    queryFn: async () => await topPostsAction().unwrap(),
   });
   
   console.log("Is fetching top posts?", query.isFetching);
@@ -142,7 +141,7 @@ function PostView({title, post, loading, emptyMessage = "No hay publicaciones"}:
   
   const query = useQuery<User, ErrorDescription>({
     queryKey: ['users', 'by-id', post?.author],
-    queryFn: async () => unwrap(await findUsersAction(post!.author!)),
+    queryFn: async () => await findUsersAction(post!.author!).unwrap(),
     enabled: hasAuthor,
   });
   
@@ -266,7 +265,7 @@ function AppointmensCharts({authorities}: Readonly<{ authorities: string[] }>) {
                 className="w-full"
                 value={filters.professional}
                 onSelect={filters.setProfessional}
-                queryFn={fromPage(async (search) => await pageUsersAction({
+                queryFn={fromPage((search) => pageUsersAction({
                   search,
                   page: 0,
                   size: 15,

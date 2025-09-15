@@ -6,7 +6,7 @@ import {Popover, PopoverContent, PopoverTrigger} from '@/components/ui/popover';
 import {ScrollArea} from '@/components/ui/scroll-area';
 import {type ComponentProps, type  PropsWithChildren, SyntheticEvent, useCallback, useEffect, useState} from 'react';
 import type {Page} from "@/lib/crud";
-import {type  AwaitResult, unwrap} from "@/lib/result";
+import type {AwaitResult} from "@/lib/result";
 import {type ErrorDescription, parseError} from "@/lib/errors";
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 import {useQuery} from "@tanstack/react-query";
@@ -501,6 +501,6 @@ function XCircle({className, ...props}: Readonly<ComponentProps<"div">>) {
  * @param getPage Función que retorna una `Page<T>` dentro de un `AwaitResult`.
  * @returns Función que retorna `Promise<T[]>`
  */
-export function fromPage<T>(getPage: (search?: string) => AwaitResult<Page<T>>): (string?: string) => Promise<T[]> {
-  return async (search?: string) => unwrap(await getPage(search)).content
+export function fromPage<T>(getPage: (search: string) => AwaitResult<Page<T>>) {
+  return async (search: string) => (await getPage(search).unwrap()).content
 }

@@ -47,12 +47,12 @@ export async function getTipImageAction(id: string): Promise<string> {
   return `data:${contentType};base64,${base64}`;
 }
 
-export const deleteImageAction = (id: string) => attempt(async () => {
+export const deleteImageAction = attempt(async (id: string) => {
   await client.delete(`${resource}/${id}/image`);
 })
 
 
-export const topTipsAction = () => attempt(async () => {
+export const topTipsAction = attempt(async () => {
   const response = await client.get<Tip[]>(`${resource}/top`);
   return response.data;
 });

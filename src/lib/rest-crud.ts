@@ -1,7 +1,7 @@
 import type {Countable, Creatable, CrudOperations, Deletable, Entity, Existable, Findable, Page, Pageable, PageQuery, Query, QueryBase, ReadOperations, TypeCrudOperations, TypeReadOperation, TypeWriteOperation, Updatable, WriteOperations} from "@/lib/crud";
 import {Axios, type AxiosRequestConfig} from "axios";
-import {parseError, parseErrorOrValidationErrors} from "@/lib/errors";
-import {fail, succeed} from "./result";
+import {parseErrorOrValidationErrors} from "@/lib/errors";
+import {attempt} from "@/lib/result";
 
 
 export type Converter<Source, Target> = (src: Source) => Target;
@@ -67,19 +67,14 @@ async function getRequestConfig(config?: WithRequestConfig["requestConfig"]): Pr
 export function restPageable<TEntity>(axios: Axios, resource: string, config: ReadableConfig<TEntity> & WithRequestConfig = {}): Pageable<TEntity> {
   const {entityConverter, requestConfig} = config
   return {
-    async page(query: PageQuery) {
-      try {
-        const config = await getRequestConfig(requestConfig);
-        const {data} = await axios.get<Page<TEntity>>(resource, {
-          params: pagePageQueryToParams(query),
-          ...config
-        });
-        const page = entityConverter ? {...data, content: data.content.map(entityConverter)} : data;
-        return succeed(page);
-      } catch (error) {
-        return fail(parseError(error))
-      }
-    }
+    page: attempt(async function (query: PageQuery) {
+      const config = await getRequestConfig(requestConfig);
+      const {data} = await axios.get<Page<TEntity>>(resource, {
+        params: pagePageQueryToParams(query),
+        ...config
+      });
+      return entityConverter ? {...data, content: data.content.map(entityConverter)} : data;
+    })
   }
 }
 
@@ -87,60 +82,42 @@ export function restPageable<TEntity>(axios: Axios, resource: string, config: Re
 export function restFindable<TEntity extends Entity<ID>, ID = TEntity["id"]>(axios: Axios, resource: string, config: ReadableConfig<TEntity> & WithRequestConfig = {}): Findable<TEntity> {
   const {entityConverter, requestConfig} = config
   return {
-    async find(id: ID) {
-      try {
-        const config = await getRequestConfig(requestConfig);
-        const {data} = await axios.get<TEntity>(`${resource}/${id}`, config);
-        const entity = entityConverter ? entityConverter(data) : data;
-        return succeed(entity);
-      } catch (error) {
-        return fail(parseError(error));
-      }
-    },
-    async findMany(ids: ID[]) {
-      try {
-        const config = await getRequestConfig(requestConfig);
-        const {data} = await axios.get<TEntity[]>(`${resource}/ids`, {
-          params: new URLSearchParams({ids: ids.join(',')}),
-          ...config
-        });
-        const entities = entityConverter ? data.map(entityConverter) : data;
-        return succeed(entities);
-      } catch (error) {
-        return fail(parseError(error));
-      }
-    }
+    find: attempt(async function (id: ID) {
+      const config = await getRequestConfig(requestConfig);
+      const {data} = await axios.get<TEntity>(`${resource}/${id}`, config);
+      return entityConverter ? entityConverter(data) : data;
+    }),
+    findMany: attempt(async function (ids: ID[]) {
+      const config = await getRequestConfig(requestConfig);
+      const {data} = await axios.get<TEntity[]>(`${resource}/ids`, {
+        params: new URLSearchParams({ids: ids.join(',')}),
+        ...config
+      });
+      return entityConverter ? data.map(entityConverter) : data;
+    })
   }
 }
 
 export function restCountable(axios: Axios, resource: string, config: WithRequestConfig = {}): Countable {
   const {requestConfig} = config;
   return {
-    async count(query) {
-      try {
-        const config = await getRequestConfig(requestConfig);
-        const {data} = await axios.get<number>(`${resource}/count`, {
-          params: pageQueryBaseToParams(query),
-          ...config
-        });
-        return succeed(data);
-      } catch (error) {
-        return fail(parseError(error));
-      }
-    }
+    count: attempt(async function (query) {
+      const config = await getRequestConfig(requestConfig);
+      const {data} = await axios.get<number>(`${resource}/count`, {
+        params: pageQueryBaseToParams(query),
+        ...config
+      });
+      return data;
+    })
   }
 }
 
 export function restExistable<ID>(axios: Axios, resource: string, config: WithRequestConfig = {}): Existable<ID> {
   return {
-    async exist(id: ID) {
-      try {
-        const response = await axios.get<boolean>(`${resource}/exist/${id}`, await getRequestConfig(config.requestConfig));
-        return succeed(response.data);
-      } catch (error) {
-        return fail(parseError(error));
-      }
-    }
+    exist: attempt(async function (id: ID) {
+      const {data} = await axios.get<boolean>(`${resource}/exist/${id}`, await getRequestConfig(config.requestConfig));
+      return data;
+    })
   }
 }
 
@@ -148,45 +125,30 @@ export function restExistable<ID>(axios: Axios, resource: string, config: WithRe
 export function restCreatable<TEntity, Dto>(axios: Axios, resource: string, config: WriteableConfig<TEntity, Dto> & WithRequestConfig = {}): Creatable<TEntity, Dto> {
   const {dtoConverter, entityConverter, requestConfig} = config;
   return {
-    async create(dto: Dto) {
-      try {
-        const config = await getRequestConfig(requestConfig);
-        const {data} = await axios.post<TEntity>(resource, dtoConverter ? dtoConverter(dto) : dto, config);
-        const entity = entityConverter ? entityConverter(data) : data;
-        return succeed(entity);
-      } catch (error) {
-        return fail(parseErrorOrValidationErrors(error));
-      }
-    }
+    create: attempt(async function (dto: Dto) {
+      const config = await getRequestConfig(requestConfig);
+      const {data} = await axios.post<TEntity>(resource, dtoConverter ? dtoConverter(dto) : dto, config);
+      return entityConverter ? entityConverter(data) : data;
+    }, parseErrorOrValidationErrors)
   }
 }
 
 export function restUpdatable<TEntity extends Entity<ID>, Dto, ID = TEntity["id"]>(axios: Axios, resource: string, config: WriteableConfig<TEntity, Dto> & WithRequestConfig = {}): Updatable<TEntity, Dto> {
   const {dtoConverter, entityConverter, requestConfig} = config;
   return {
-    async update(id: ID, dto: Dto) {
-      try {
-        const config = await getRequestConfig(requestConfig);
-        const {data} = await axios.put<TEntity>(`${resource}/${id}`, dtoConverter ? dtoConverter(dto) : dto, config);
-        const entity = entityConverter ? entityConverter(data) : data;
-        return succeed(entity);
-      } catch (error) {
-        return fail(parseErrorOrValidationErrors(error));
-      }
-    }
+    update: attempt(async function (id: ID, dto: Dto) {
+      const config = await getRequestConfig(requestConfig);
+      const {data} = await axios.put<TEntity>(`${resource}/${id}`, dtoConverter ? dtoConverter(dto) : dto, config);
+      return entityConverter ? entityConverter(data) : data;
+    }, parseErrorOrValidationErrors)
   }
 }
 
 export function restDeleteable<ID>(axios: Axios, resource: string, config: WithRequestConfig = {}): Deletable<ID> {
   return {
-    async delete(id: ID) {
-      try {
-        await axios.delete<void>(`${resource}/${id}`, await getRequestConfig(config.requestConfig));
-        return succeed();
-      } catch (error) {
-        return fail(parseError(error));
-      }
-    }
+    delete: attempt(async function (id: ID) {
+      await axios.delete<void>(`${resource}/${id}`, await getRequestConfig(config.requestConfig));
+    })
   }
 }
 

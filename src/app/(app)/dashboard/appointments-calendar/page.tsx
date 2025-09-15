@@ -66,7 +66,7 @@ export default function Page() {
                 className="w-full"
                 value={filters.professional}
                 onSelect={filters.setProfessional}
-                queryFn={fromPage(async (search) => await pageUsersAction({
+                queryFn={fromPage((search) => pageUsersAction({
                   search,
                   page: 0,
                   size: 15,
@@ -84,7 +84,7 @@ export default function Page() {
                 className="w-full"
                 value={filters.attendant}
                 onSelect={filters.setAttendant}
-                queryFn={fromPage(async (search) => await pageUsersAction({
+                queryFn={fromPage((search) => pageUsersAction({
                   search,
                   page: 0,
                   size: 15,

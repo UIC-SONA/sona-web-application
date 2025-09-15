@@ -4,7 +4,6 @@ import {type Dispatch, type SetStateAction, useCallback, useEffect, useMemo, use
 import type {ErrorDescription} from "@/lib/errors";
 import {parsePageQuery} from "@/components/crud/entity-crud-utils";
 import {keepPreviousData, useQuery, useQueryClient} from "@tanstack/react-query";
-import {unwrap} from "@/lib/result";
 
 export enum LoadingReadTarget {
   Data,
@@ -70,7 +69,7 @@ export function useEntityRead<TEntity extends Entity<ID>, ID = TEntity['id']>({
   
   const query = useQuery<Page<TEntity>, ErrorDescription>({
     queryKey,
-    queryFn: async () => unwrap(await pageAction(parsePageQuery(queryKey[1], toQuery))),
+    queryFn: async () => await pageAction(parsePageQuery(queryKey[1], toQuery)).unwrap(),
     placeholderData: keepPreviousData,
     staleTime: 1000 * 60,
   });

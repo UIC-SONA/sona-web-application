@@ -1,52 +1,155 @@
-import {type ErrorDescription, parseError} from "./errors";
+import {type ErrorDescription, parseError} from "@/lib/errors";
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+type AnyFunction = (...args: any[]) => any;
+type AttemptCallback = () => any;
+type ReturnTypeAwaited<F extends AnyFunction> = ReturnType<Awaited<F>>;
+type IsPromise<T> = T extends Promise<any> ? true : false;
+
+/**
+ * Representa un resultado fallido.
+ */
 export type Failure<E = unknown> = {
   success: false;
   error: E;
 };
 
+/**
+ * Representa un resultado exitoso.
+ */
 export type Success<T = void> = {
   success: true;
   data: T;
 };
 
-export type Result<T = void, E = unknown> = Failure<E> | Success<T>;
-export type AwaitResult<T = void, E = unknown> = Promise<Result<T, E>>;
+/**
+ * Representa un resultado que puede ser exitoso o fallido,
+ * con utilidades adicionales (`unwrap`, `or`).
+ */
+export type Result<T = void, E = unknown> = (Failure<E> | Success<T>) & {
+  unwrap(): T;
+  or(defaultValue: T): T;
+};
 
+/**
+ * Versión asíncrona de {@link Result}.
+ */
+export type AwaitResult<T = void, E = unknown> = Promise<Result<T, E>> & {
+  unwrap(): Promise<T>;
+  or(defaultValue: T): Promise<T>;
+};
+
+/**
+ * Construye un resultado exitoso sin datos.
+ */
 export function succeed(): Success;
+/**
+ * Construye un resultado exitoso con datos.
+ */
 export function succeed<T>(data: T): Success<T>;
 export function succeed<T>(data?: T): Success<T | undefined> {
   return {success: true, data};
 }
 
+/**
+ * Construye un resultado fallido con un error.
+ */
 export function fail<E = unknown>(error: E): Failure<E> {
   return {success: false, error};
 }
 
-export function unwrap<T, E>(result: Result<T, E>): T {
+/**
+ * Convierte un {@link Success} o {@link Failure} en un {@link Result} enriquecido.
+ */
+export function asResult<T, E>(result: Failure<E> | Success<T>): Result<T, E> {
+  return Object.assign(result, {
+    unwrap: () => unwrap(result),
+    or: (defaultValue: T) => or(result, defaultValue),
+  });
+}
+
+/**
+ * Extrae el dato de un resultado o lanza el error si es fallo.
+ */
+export function unwrap<T, E>(result: Failure<E> | Success<T>): T {
   if (result.success) return result.data;
   throw result.error;
 }
 
-type AttemptCallbacks<T> = (() => Promise<T>) | (() => T);
+/**
+ * Extrae el dato de un resultado o devuelve un valor por defecto si es fallo.
+ */
+export function or<T, E>(result: Failure<E> | Success<T>, defaultValue: T): T {
+  return result.success ? result.data : defaultValue;
+}
 
-export function attempt<T>(callback: () => Promise<T>): AwaitResult<T, ErrorDescription>;
-export function attempt<T, E>(callback: () => Promise<T>, parser: (error: unknown) => E): AwaitResult<T, E>;
-export function attempt<T>(callback: () => T): Result<T, ErrorDescription>;
-export function attempt<T, E>(callback: () => T, parser: (error: unknown) => E): Result<T, E>;
-export function attempt<T, E>(
-  callback: AttemptCallbacks<T>,
+/**
+ * Ejecuta un callback y devuelve un {@link Result} o {@link AwaitResult}.
+ * Usa {@link parseError} para normalizar errores.
+ */
+export function tryGet<F extends AttemptCallback>(
+  callback: F
+): IsPromise<ReturnType<F>> extends true
+  ? AwaitResult<ReturnTypeAwaited<F>, ErrorDescription>
+  : Result<ReturnType<F>, ErrorDescription>;
+
+/**
+ * Ejecuta un callback y devuelve un {@link Result} o {@link AwaitResult}.
+ * Usa un parser personalizado para normalizar errores.
+ */
+export function tryGet<F extends AttemptCallback, E>(
+  callback: F,
+  parser: (error: unknown) => E
+): IsPromise<ReturnType<F>> extends true
+  ? AwaitResult<ReturnTypeAwaited<F>, E>
+  : Result<ReturnType<F>, E>;
+
+export function tryGet<F extends AttemptCallback, E>(
+  callback: F,
   parser: (error: unknown) => E = parseError as (error: unknown) => E
-): Result<T, E> | AwaitResult<T, E> {
+): Result<ReturnType<F>, E> | AwaitResult<ReturnTypeAwaited<F>, E> {
   const result = callback();
   if (result instanceof Promise) {
-    return result
-    .then(succeed<T>)
-    .catch((error) => fail(parser(error)));
+    const promise = result
+    .then(data => asResult<ReturnTypeAwaited<F>, E>(succeed(data)))
+    .catch(error => asResult<ReturnTypeAwaited<F>, E>(fail(parser(error))));
+    
+    return Object.assign(promise, {
+      unwrap: () => promise.then(res => res.unwrap()),
+      or: (defaultValue: ReturnTypeAwaited<F>) => promise.then(res => res.or(defaultValue)),
+    });
   }
   try {
-    return succeed(result);
+    return asResult<ReturnType<F>, E>(succeed(result));
   } catch (error) {
-    return fail(parser(error));
+    return asResult<ReturnType<F>, E>(fail(parser(error)));
   }
+}
+
+/**
+ * Envuelve una función en una versión segura que devuelve {@link Result} o {@link AwaitResult}.
+ * Usa {@link parseError} para normalizar errores.
+ */
+export function attempt<F extends AnyFunction>(
+  callback: F
+): IsPromise<ReturnType<F>> extends true
+  ? (...args: Parameters<F>) => AwaitResult<ReturnTypeAwaited<F>, ErrorDescription>
+  : (...args: Parameters<F>) => Result<ReturnType<F>, ErrorDescription>;
+
+/**
+ * Envuelve una función en una versión segura que devuelve {@link Result} o {@link AwaitResult}.
+ * Usa un parser personalizado para normalizar errores.
+ */
+export function attempt<F extends AnyFunction, E>(
+  callback: F,
+  parser: (error: unknown) => E
+): IsPromise<ReturnType<F>> extends true
+  ? (...args: Parameters<F>) => AwaitResult<ReturnTypeAwaited<F>, E>
+  : (...args: Parameters<F>) => Result<ReturnType<F>, E>;
+
+export function attempt<F extends AnyFunction, E>(
+  callback: F,
+  parser: (error: unknown) => E = parseError as (error: unknown) => E
+) {
+  return (...args: Parameters<F>) => tryGet(() => callback(...args), parser);
 }

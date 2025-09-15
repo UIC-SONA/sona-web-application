@@ -3,14 +3,14 @@
 import {Check, CheckCheck, CircleX, Clock} from "lucide-react";
 import {MAIN_SERVER_URL} from "@/constants";
 import {useState} from "react";
-import {Dialog, DialogContent, DialogTrigger} from "@/components/ui/dialog";
+import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger} from "@/components/ui/dialog";
 import {ChatMessage, StatusMessage} from "@/app/(app)/chat/_providers/chat-provider";
-import {ChatMessageList} from "@/app/(app)/chat/_componentes/chat-message-list";
-import {ChatBubble, ChatBubbleAvatar, ChatBubbleMessage, ChatBubbleTimestamp} from "@/app/(app)/chat/_componentes/chat-bubble";
+import {ChatMessageList} from "@/app/(app)/chat/_components/chat-message-list";
+import {ChatBubble, ChatBubbleAvatar, ChatBubbleMessage, ChatBubbleTimestamp} from "@/app/(app)/chat/_components/chat-bubble";
 import {profilePicturePath} from "@/app/(app)/dashboard/users/actions";
 import {ChatMessageType, ChatUser} from "@/app/(app)/chat/definitions";
 import {DateFormatter, getLocalTimeZone, isSameDay, today, ZonedDateTime} from "@internationalized/date";
-import Image from "next/image";
+import {AudioPlayer} from "@/app/(app)/chat/_components/audio-player";
 
 interface ChatListProps {
   messages: ChatMessage[];
@@ -28,7 +28,7 @@ export default function ChatMessageListGenerator({messages, participans, isMe}: 
         const hasRead = message.readBy.length === otherParticipants.length;
         
         return <ChatBubble
-          key={"Chat-" + index}
+          key={message.id}
           variant={variant}
         >
           {message.sentBy.hasProfilePicture && <ChatBubbleAvatar
@@ -72,11 +72,24 @@ function BuildChatMessage({message}: Readonly<BuildChatMessageProps>) {
   }
   
   if (message.type === ChatMessageType.IMAGE) {
+    if (message.status === StatusMessage.SENDING) {
+      return <span className="italic text-sm ">Enviando imagen...</span>;
+    }
     
     const uri = new URL(`/chat/resource`, MAIN_SERVER_URL);
     uri.searchParams.append("id", message.message);
     
     return <ImageWithDialog src={uri.toString()}/>;
+  }
+  
+  if (message.type === ChatMessageType.VOICE) {
+    if (message.status === StatusMessage.SENDING) {
+      return <span className="italic text-sm ">Enviando mensaje de voz...</span>;
+    }
+    const uri = new URL(`/chat/resource`, MAIN_SERVER_URL);
+    uri.searchParams.append("id", message.message);
+    
+    return <AudioPlayer src={uri.toString()}/>;
   }
 }
 

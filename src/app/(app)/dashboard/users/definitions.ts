@@ -32,10 +32,6 @@ export interface UserDto {
   password: string | undefined;
 }
 
-export interface UsersById {
-  [userId: number]: User;
-}
-
 export const authorities: Record<Authority, string> = {
   [Authority.ADMIN]: "Administrador",
   [Authority.ADMINISTRATIVE]: "Administrativo",

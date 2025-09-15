@@ -25,21 +25,19 @@ function rangeConverter(range: any): AppointmentsRange {
 
 const resource = '/appointment';
 
-const read = restRead(client, resource, {
-  entityConverter
-})
+const read = restRead(client, resource, {entityConverter})
 
 export const findAppointmentAction = read.find;
 export const pageAppointmentsAction = read.page;
 
-export const listAppointmentsAction = (query: Query) => attempt(async () => {
+export const listAppointmentsAction = attempt(async (query: Query) => {
   const response = await client.get<Appointment[]>(`${resource}/list`, {
     params: pageQueryToParams(query),
   });
   return response.data.map(entityConverter);
 });
 
-export const findAppointmentsRangesByProfessionalAction = async (professionalId: number, from: CalendarDate, to: CalendarDate) => {
+export const findAppointmentsRangesByProfessionalAction = attempt(async (professionalId: number, from: CalendarDate, to: CalendarDate) => {
   const response = await client.get<[]>(
     `${resource}/professional/${professionalId}/ranges`,
     {
@@ -50,4 +48,4 @@ export const findAppointmentsRangesByProfessionalAction = async (professionalId:
     }
   );
   return response.data.map(rangeConverter);
-};
+});

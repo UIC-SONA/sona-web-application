@@ -7,7 +7,6 @@ import {useReadMessage} from "@/app/(app)/chat/_hooks/use-read-message";
 import {useReceiveMessage} from "@/app/(app)/chat/_hooks/use-receive-message";
 import {InfiniteData, useInfiniteQuery, useQuery, useQueryClient} from "@tanstack/react-query";
 import {ErrorDescription} from "@/lib/errors";
-import {unwrap} from "@/lib/result";
 import {alert} from "@/providers/alert-dialogs";
 import {getLocalTimeZone, now} from "@internationalized/date";
 import {functionalUpdate, Updater} from "@tanstack/react-table";
@@ -27,7 +26,7 @@ export interface ChatRoom extends ChR {
   chunkSize: number;
 }
 
-type SendRoomMessage = (roomId: string, message: string | File, type: ChatMessageType) => Promise<void>;
+type SendRoomMessage = (roomId: string, message: string | Blob, type: ChatMessageType) => Promise<void>;
 
 interface ChatContextType {
   loading: boolean;
@@ -38,7 +37,7 @@ interface ChatContextType {
 
 export const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
-const orderMessagesByDate = (a: ChatMessage, b: ChatMessage) => a.createdAt.compare(b.createdAt);
+const orderRoomsWithLastMessages = (a: ChatRoom, b: ChatRoom) => a.lastMessage.createdAt.compare(b.lastMessage.createdAt);
 
 export function ChatProvider({children, chatUser}: Readonly<PropsWithChildren<{ chatUser: ChatUser }>>) {
   
@@ -49,10 +48,10 @@ export function ChatProvider({children, chatUser}: Readonly<PropsWithChildren<{ 
   const queryRoom = useQuery<ChatRoom[], ErrorDescription>({
     queryKey: ['chat-rooms', chatUser.id],
     queryFn: async () => {
-      const chatRooms = unwrap(await getChatRoomsAction())
+      const chatRooms = await getChatRoomsAction().unwrap();
       const promises = chatRooms.map<Promise<ChatRoom>>(async room => {
-        const lastMessage = unwrap(await getLastMessageAction(room.id));
-        const chunkSize = unwrap(await chunkCountAction(room.id));
+        const lastMessage = await getLastMessageAction(room.id).unwrap();
+        const chunkSize = await chunkCountAction(room.id).unwrap();
         return {
           ...room,
           lastMessage: {...lastMessage, status: StatusMessage.DELIVERED},
@@ -60,7 +59,7 @@ export function ChatProvider({children, chatUser}: Readonly<PropsWithChildren<{ 
         };
       });
       const resolvedRooms = await Promise.all(promises);
-      return resolvedRooms.sort((a, b) => orderMessagesByDate(b.lastMessage, a.lastMessage));
+      return resolvedRooms.sort(orderRoomsWithLastMessages);
     }
   });
   
@@ -92,7 +91,7 @@ export function ChatProvider({children, chatUser}: Readonly<PropsWithChildren<{ 
   const setLastMessage = useCallback((roomId: string, message: ChatMessage) => {
     updateRooms(oldData => {
       if (!oldData) return oldData;
-      return oldData.map(room => room.id !== roomId ? room : {...room, lastMessage: message}).sort((a, b) => orderMessagesByDate(b.lastMessage, a.lastMessage));
+      return oldData.map(room => room.id !== roomId ? room : {...room, lastMessage: message}).sort(orderRoomsWithLastMessages);
     });
   }, [updateRooms]);
   
@@ -141,7 +140,7 @@ export function ChatProvider({children, chatUser}: Readonly<PropsWithChildren<{ 
     });
   });
   
-  const sendMessage = useCallback(async (roomId: string, message: string | File, type: ChatMessageType) => {
+  const sendMessage = useCallback(async (roomId: string, message: string | Blob, type: ChatMessageType) => {
     if (type === ChatMessageType.CUSTOM) {
       console.error('Custom message type not supported');
       return;
@@ -168,11 +167,11 @@ export function ChatProvider({children, chatUser}: Readonly<PropsWithChildren<{ 
       let chatMessage: ChatMessageSent;
       
       if (type === ChatMessageType.TEXT && typeof message === 'string') {
-        chatMessage = unwrap(await sendMessageAction({roomId, requestId, message}));
-      } else if (type === ChatMessageType.VOICE && message instanceof File) {
-        chatMessage = unwrap(await sendVoiceAction({roomId, requestId, voice: message}));
-      } else if (type === ChatMessageType.IMAGE && message instanceof File) {
-        chatMessage = unwrap(await sendImageAction({roomId, requestId, image: message}));
+        chatMessage = await sendMessageAction({roomId, requestId, message}).unwrap();
+      } else if (type === ChatMessageType.VOICE && message instanceof Blob) {
+        chatMessage = await sendVoiceAction({roomId, requestId, voice: message}).unwrap();
+      } else if (type === ChatMessageType.IMAGE && message instanceof Blob) {
+        chatMessage = await sendImageAction({roomId, requestId, image: message}).unwrap();
       } else {
         console.error('Invalid message type or message');
         return;
@@ -192,7 +191,6 @@ export function ChatProvider({children, chatUser}: Readonly<PropsWithChildren<{ 
       
     } catch (error) {
       console.error('Error sending message:', error);
-      
       updateLastMessages(roomId, oldMessages => (oldMessages || []).map(msg => msg === messageToSent
         ? {...msg, status: StatusMessage.UNDELIVERED}
         : msg
@@ -227,7 +225,7 @@ export function useChat(): ChatContextType {
   return context;
 }
 
-export type SendMessage = (message: string | File, type: ChatMessageType) => Promise<void>;
+export type SendMessage = (message: string | Blob, type: ChatMessageType) => Promise<void>;
 
 interface UseChatRoomReturn {
   room?: ChatRoom;
@@ -251,7 +249,7 @@ export function useChatRoom(roomId: string): UseChatRoomReturn {
     initialPageParam: chunks, // arrancamos desde el más reciente
     queryKey: ['chat-messages', roomId],
     queryFn: async ({pageParam}) => {
-      const messages = unwrap(await getChatMessagesAction(room!.id, pageParam));
+      const messages = await getChatMessagesAction(room!.id, pageParam).unwrap();
       return messages.map<ChatMessage>(message => ({
         ...message,
         status: StatusMessage.DELIVERED
@@ -262,17 +260,17 @@ export function useChatRoom(roomId: string): UseChatRoomReturn {
     // cargar más antiguos
     getNextPageParam: (lastPage, _, lastPageParam) => {
       if (lastPage.length === 0 || lastPageParam <= 1) return undefined;
-      return lastPageParam - 1;
+      return lastPageParam + 1;
     },
     
     // cargar más recientes (si empezaste desde el medio, o refrescas)
     getPreviousPageParam: (firstPage, _, firstPageParam) => {
       if (firstPage.length === 0 || firstPageParam >= chunks) return undefined;
-      return firstPageParam + 1;
+      return firstPageParam - 1;
     }
   });
   
-  const sendChatMessage = useCallback(async (message: string | File, type: ChatMessageType) => {
+  const sendChatMessage = useCallback(async (message: string | Blob, type: ChatMessageType) => {
     await sendMessage(roomId, message, type);
   }, [roomId, sendMessage])
   

@@ -28,71 +28,63 @@ export function EntityForm({form, entity}: Readonly<EntityFormProps<Tip, TipDto>
       <FormField
         control={control}
         name="summary"
-        render={({field}) => {
-          return (
-            <FormItem className="lg:col-span-2">
-              <FormLabel>Resumen</FormLabel>
-              <FormControl>
-                <Input placeholder="Resumen" {...field} />
-              </FormControl>
-              <FormMessage/>
-            </FormItem>
-          );
-        }}
+        render={({field}) => (
+          <FormItem className="lg:col-span-2">
+            <FormLabel>Resumen</FormLabel>
+            <FormControl>
+              <Input placeholder="Resumen" {...field} />
+            </FormControl>
+            <FormMessage/>
+          </FormItem>
+        )}
       />
       <FormField
         control={control}
         defaultValue={false}
         name="active"
-        render={({field}) => {
-          return (
-            <FormItem className="flex items-center space-x-3 sm:col-span-2 lg:col-span-4">
-              <FormLabel className="m-0">Activo</FormLabel>
-              <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-              <FormMessage/>
-            </FormItem>
-          );
-        }}
+        render={({field}) => (
+          <FormItem className="flex items-center space-x-3 sm:col-span-2 lg:col-span-4">
+            <FormLabel className="m-0">Activo</FormLabel>
+            <FormControl>
+              <Switch
+                checked={field.value}
+                onCheckedChange={field.onChange}
+              />
+            </FormControl>
+            <FormMessage/>
+          </FormItem>
+        )}
       />
       <FormField
         control={control}
         name="description"
-        render={({field}) => {
-          return (
-            <FormItem className="sm:col-span-2 lg:col-span-4">
-              <FormLabel>Descripción</FormLabel>
-              <FormControl>
-                <Textarea placeholder="Descripción" className="resize-y min-h-32" {...field} />
-              </FormControl>
-              <FormMessage/>
-            </FormItem>
-          );
-        }}
+        render={({field}) => (
+          <FormItem className="sm:col-span-2 lg:col-span-4">
+            <FormLabel>Descripción</FormLabel>
+            <FormControl>
+              <Textarea placeholder="Descripción" className="resize-y min-h-32" {...field} />
+            </FormControl>
+            <FormMessage/>
+          </FormItem>
+        )}
       />
       <FormField
         control={control}
         name="tags"
-        render={({field}) => {
-          return (
-            <FormItem className="sm:col-span-2 lg:col-span-4">
-              <FormLabel>Tags</FormLabel>
-              <FormControl>
-                <MultipleSelector
-                  placeholder="Tags"
-                  creatable
-                  value={field.value?.map((tag) => ({label: tag, value: tag}))}
-                  onChange={(tags) => field.onChange(tags.map((tag) => tag.value))}
-                />
-              </FormControl>
-              <FormMessage/>
-            </FormItem>
-          );
-        }}
+        render={({field}) => (
+          <FormItem className="sm:col-span-2 lg:col-span-4">
+            <FormLabel>Tags</FormLabel>
+            <FormControl>
+              <MultipleSelector
+                placeholder="Tags"
+                creatable
+                value={field.value?.map((tag) => ({label: tag, value: tag}))}
+                onChange={(tags) => field.onChange(tags.map((tag) => tag.value))}
+              />
+            </FormControl>
+            <FormMessage/>
+          </FormItem>
+        )}
       />
       <FormField
         control={control}

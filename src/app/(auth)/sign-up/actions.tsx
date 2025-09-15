@@ -4,9 +4,6 @@ import {parseErrorOrValidationErrors} from "@/lib/errors";
 import {attempt} from "@/lib/result";
 
 
-export async function singup(data: SignupData) {
-  return attempt(
-    async () => await client.post(`/user/sign-up`, data),
-    parseErrorOrValidationErrors
-  );
-}
+export const singup = attempt(async (data: SignupData) => {
+  await client.post(`/user/sign-up`, data)
+}, parseErrorOrValidationErrors);
