@@ -1,4 +1,4 @@
-import {ChatMessage, ChatMessageSent, ChatRoom, ReadBy, ReadMessages} from "@/app/(app)/chat/definitions";
+import {ChatMessage, ChatMessageDto, ChatRoom, ChatReadBy, ChatReadMessages} from "@/app/(app)/chat/definitions";
 import {client} from "@/lib/http/axios-client";
 import {attempt} from "@/lib/result";
 import {parseAbsoluteToLocal} from "@internationalized/date";
@@ -7,7 +7,7 @@ import {parseErrorOrValidationErrors} from "@/lib/errors";
 const resource = '/chat';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-function parseReadBy(data: any): ReadBy {
+function parseReadBy(data: any): ChatReadBy {
   return {
     ...data,
     readAt: parseAbsoluteToLocal(data.readAt)
@@ -24,7 +24,7 @@ function parseChatMessage(data: any): ChatMessage {
 }
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-export function parseChatMessageSent(data: any): ChatMessageSent {
+export function parseChatMessageSent(data: any): ChatMessageDto {
   return {
     message: parseChatMessage(data.message),
     roomId: data.roomId,
@@ -33,7 +33,7 @@ export function parseChatMessageSent(data: any): ChatMessageSent {
 }
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-export function parseReadMessages(data: any): ReadMessages {
+export function parseReadMessages(data: any): ChatReadMessages {
   return {
     roomId: data.roomId,
     readBy: parseReadBy(data.readBy),
@@ -76,6 +76,22 @@ export const sendVoiceAction = attempt(async ({roomId, requestId, voice}: { room
   formData.append('voice', voice);
   const response = await client.post(
     `${resource}/send/${roomId}/voice`,
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      },
+      params: {requestId}
+    }
+  );
+  return parseChatMessageSent(response.data);
+}, parseErrorOrValidationErrors);
+
+export const sendVideoAction = attempt(async ({roomId, requestId, video}: { roomId: string, requestId: string, video: Blob }) => {
+  const formData = new FormData();
+  formData.append('video', video);
+  const response = await client.post(
+    `${resource}/send/${roomId}/video`,
     formData,
     {
       headers: {

@@ -146,9 +146,7 @@ function ChatSidebarContent({user}: Readonly<{ user: User }>) {
             .map(readBy => readBy.participant.id).includes(user.id);
           
           return (
-            <SidebarMenuItem
-              key={room.id}
-            >
+            <SidebarMenuItem key={room.id}>
               <Link href={`/chat/${room.id}`} onClick={() => {
                 if (isMobile) {
                   toggleSidebar();
@@ -185,6 +183,7 @@ function ChatPreviewMenu({room, user}: Readonly<ChatPreviewMenuProps>) {
   const lastMessagePreview = {
     [ChatMessageType.IMAGE]: "Imagen",
     [ChatMessageType.VOICE]: "Audio",
+    [ChatMessageType.VIDEO]: "Video",
     [ChatMessageType.TEXT]: lastMessage.message,
     [ChatMessageType.CUSTOM]: "..."
   }[lastMessage.type];

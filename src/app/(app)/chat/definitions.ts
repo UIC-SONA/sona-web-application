@@ -12,6 +12,7 @@ export interface ChatUser {
 
 export enum ChatMessageType {
   IMAGE = 'IMAGE',
+  VIDEO = 'VIDEO',
   TEXT = 'TEXT',
   VOICE = 'VOICE',
   CUSTOM = 'CUSTOM'
@@ -23,23 +24,23 @@ export interface ChatMessage {
   createdAt: ZonedDateTime
   sentBy: ChatUser;
   type: ChatMessageType;
-  readBy: ReadBy[];
+  readBy: ChatReadBy[];
 }
 
-export interface ReadBy {
+export interface ChatReadBy {
   participant: ChatUser;
   readAt: ZonedDateTime;
 }
 
-export interface ChatMessageSent {
-  message: ChatMessage;
+export interface ChatMessageDto {
   roomId: string;
+  message: ChatMessage;
   requestId: string; // Identificador de la solicitud para el cliente, se envia para confirmar la recepción del mensaje
 }
 
-export interface ReadMessages {
+export interface ChatReadMessages {
   roomId: string;
-  readBy: ReadBy;
+  readBy: ChatReadBy;
   messageIds: string[];
 }
 

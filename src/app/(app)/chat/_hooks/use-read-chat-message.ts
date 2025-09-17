@@ -1,11 +1,11 @@
-import {ReadMessages} from "@/app/(app)/chat/definitions";
+import {ChatReadMessages} from "@/app/(app)/chat/definitions";
 import {useStomp} from "@/app/(app)/chat/_providers/stomp-providers";
 import {useEffect} from "react";
 import {parseReadMessages} from "@/app/(app)/chat/actions";
 
-type OnReadMessage = (readMessage: ReadMessages) => void;
+type OnReadChatMessage = (readMessage: ChatReadMessages) => void;
 
-export function useReadMessage(participantId: number | undefined, onReadMessage: OnReadMessage) {
+export function useReadChatMessage(participantId: number | undefined, onReadMessage: OnReadChatMessage) {
   const {subscribe, unsubscribe, connected} = useStomp();
   
   useEffect(() => {

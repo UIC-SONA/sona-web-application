@@ -1,11 +1,15 @@
 "use client";
 
-import {AudioWaveform} from "react-music-waveform";
 import {useLayoutEffect, useState, useRef} from "react";
+import AudioWaveform from "@/components/wave/audio-waveform";
+import {useTheme} from "next-themes";
+import {Theme} from "@/components/wave/types";
 
-export function AudioPlayer({src}: Readonly<{ src: string }>) {
+export function ChatMessageAudioPlayer({src}: Readonly<{ src: string }>) {
+  
   const [primaryColor, setPrimaryColor] = useState("");
   const [progressColor, setProgressColor] = useState("");
+  const {resolvedTheme} = useTheme();
   const rafRef = useRef<number>(null);
   
   useLayoutEffect(() => {
@@ -35,6 +39,7 @@ export function AudioPlayer({src}: Readonly<{ src: string }>) {
       <AudioWaveform
         src={src}
         style="viridara"
+        theme={resolvedTheme as Theme}
         height={40}
         width={150}
         showControls={true}

@@ -1,10 +1,10 @@
 import {createContext, PropsWithChildren, useCallback, useContext, useEffect, useMemo, useState} from "react";
 import {User} from "@/app/(app)/dashboard/users/definitions";
-import {ChatMessage as ChM, ChatMessageSent, ChatMessageType, ChatRoom as ChR, ChatRoomType, ChatUser} from "@/app/(app)/chat/definitions";
-import {chunkCountAction, getChatMessagesAction, getChatRoomsAction, getLastMessageAction, readMessagesAction, sendImageAction, sendMessageAction, sendVoiceAction} from "@/app/(app)/chat/actions";
+import {ChatMessage as ChM, ChatMessageDto, ChatMessageType, ChatRoom as ChR, ChatRoomType, ChatUser} from "@/app/(app)/chat/definitions";
+import {chunkCountAction, getChatMessagesAction, getChatRoomsAction, getLastMessageAction, readMessagesAction, sendImageAction, sendMessageAction, sendVideoAction, sendVoiceAction} from "@/app/(app)/chat/actions";
 import {profilePicturePath} from "@/app/(app)/dashboard/users/actions";
-import {useReadMessage} from "@/app/(app)/chat/_hooks/use-read-message";
-import {useReceiveMessage} from "@/app/(app)/chat/_hooks/use-receive-message";
+import {useReadChatMessage} from "@/app/(app)/chat/_hooks/use-read-chat-message";
+import {useReceiveChatMessage} from "@/app/(app)/chat/_hooks/use-receive-chat-message";
 import {InfiniteData, useInfiniteQuery, useQuery, useQueryClient} from "@tanstack/react-query";
 import {ErrorDescription} from "@/lib/errors";
 import {alert} from "@/providers/alert-dialogs";
@@ -37,7 +37,7 @@ interface ChatContextType {
 
 export const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
-const orderRoomsWithLastMessages = (a: ChatRoom, b: ChatRoom) => a.lastMessage.createdAt.compare(b.lastMessage.createdAt);
+const orderRoomsWithLastMessages = (a: ChatRoom, b: ChatRoom) => b.lastMessage.createdAt.compare(a.lastMessage.createdAt);
 
 export function ChatProvider({children, chatUser}: Readonly<PropsWithChildren<{ chatUser: ChatUser }>>) {
   
@@ -63,7 +63,7 @@ export function ChatProvider({children, chatUser}: Readonly<PropsWithChildren<{ 
     }
   });
   
-  const updateRooms = useCallback((updater: Updater<ChatRoom[] | undefined>) => {
+  const updateChatRooms = useCallback((updater: Updater<ChatRoom[] | undefined>) => {
     queryClient.setQueryData<ChatRoom[]>(['chat-rooms', chatUser.id], updater);
   }, [queryClient, chatUser.id]);
   
@@ -89,13 +89,13 @@ export function ChatProvider({children, chatUser}: Readonly<PropsWithChildren<{ 
   }, [queryClient]);
   
   const setLastMessage = useCallback((roomId: string, message: ChatMessage) => {
-    updateRooms(oldData => {
+    updateChatRooms(oldData => {
       if (!oldData) return oldData;
       return oldData.map(room => room.id !== roomId ? room : {...room, lastMessage: message}).sort(orderRoomsWithLastMessages);
     });
-  }, [updateRooms]);
+  }, [updateChatRooms]);
   
-  useReceiveMessage(chatUser.id, async ({roomId, message, requestId}) => {
+  useReceiveChatMessage(chatUser.id, async ({roomId, message, requestId}) => {
     if (!queryRoom.isSuccess) return;
     
     const received: ChatMessage = {
@@ -111,7 +111,7 @@ export function ChatProvider({children, chatUser}: Readonly<PropsWithChildren<{ 
     setLastMessage(roomId, received);
   });
   
-  useReadMessage(chatUser.id, ({roomId, readBy, messageIds}) => {
+  useReadChatMessage(chatUser.id, ({roomId, readBy, messageIds}) => {
     
     updateLastMessages(roomId, oldMessages => {
       if (!oldMessages) return oldMessages;
@@ -119,12 +119,12 @@ export function ChatProvider({children, chatUser}: Readonly<PropsWithChildren<{ 
         if (!messageIds.includes(message.id)) return message;
         return {
           ...message,
-          readBy: [...message.readBy, readBy,]
+          readBy: [...message.readBy, readBy]
         };
       })
     });
     
-    updateRooms(cachedRooms => {
+    updateChatRooms(cachedRooms => {
       if (!cachedRooms) return cachedRooms;
       return cachedRooms.map(room => {
         if (room.id !== roomId) return room;
@@ -133,7 +133,7 @@ export function ChatProvider({children, chatUser}: Readonly<PropsWithChildren<{ 
           ...room,
           lastMessage: {
             ...room.lastMessage,
-            readBy: [...room.lastMessage.readBy, readBy,]
+            readBy: [...room.lastMessage.readBy, readBy]
           }
         };
       });
@@ -149,8 +149,8 @@ export function ChatProvider({children, chatUser}: Readonly<PropsWithChildren<{ 
     const requestId = crypto.randomUUID().toString();
     setRequestIds(prev => [...prev, requestId]);
     
-    const messageToSent: ChatMessage = {
-      id: "",
+    const chatMessage: ChatMessage = {
+      id: requestId,
       message: typeof message === 'string' ? message : "Enviando...",
       createdAt: now(getLocalTimeZone()),
       type,
@@ -159,39 +159,41 @@ export function ChatProvider({children, chatUser}: Readonly<PropsWithChildren<{ 
       status: StatusMessage.SENDING
     };
     
-    setLastMessage(roomId, messageToSent);
-    updateLastMessages(roomId, oldMessages => [...(oldMessages || []), messageToSent]);
+    setLastMessage(roomId, chatMessage);
+    updateLastMessages(roomId, oldMessages => [...(oldMessages || []), chatMessage]);
     
     try {
       
-      let chatMessage: ChatMessageSent;
+      let dto: ChatMessageDto;
       
       if (type === ChatMessageType.TEXT && typeof message === 'string') {
-        chatMessage = await sendMessageAction({roomId, requestId, message}).unwrap();
+        dto = await sendMessageAction({roomId, requestId, message}).unwrap();
       } else if (type === ChatMessageType.VOICE && message instanceof Blob) {
-        chatMessage = await sendVoiceAction({roomId, requestId, voice: message}).unwrap();
+        dto = await sendVoiceAction({roomId, requestId, voice: message}).unwrap();
       } else if (type === ChatMessageType.IMAGE && message instanceof Blob) {
-        chatMessage = await sendImageAction({roomId, requestId, image: message}).unwrap();
+        dto = await sendImageAction({roomId, requestId, image: message}).unwrap();
+      } else if (type === ChatMessageType.VIDEO && message instanceof Blob) {
+        dto = await sendVideoAction({roomId, requestId, video: message}).unwrap();
       } else {
         console.error('Invalid message type or message');
         return;
       }
       
-      const sentMessage: ChatMessage = {
-        ...chatMessage.message,
+      const chatMessageDelivered: ChatMessage = {
+        ...dto.message,
         sentBy: chatUser,
         readBy: [],
         status: StatusMessage.DELIVERED
       };
       
-      updateLastMessages(roomId, oldMessages => (oldMessages || []).map(msg => msg === messageToSent
-        ? sentMessage
+      updateLastMessages(roomId, oldMessages => (oldMessages || []).map(msg => msg === chatMessage
+        ? chatMessageDelivered
         : msg
       ));
       
     } catch (error) {
       console.error('Error sending message:', error);
-      updateLastMessages(roomId, oldMessages => (oldMessages || []).map(msg => msg === messageToSent
+      updateLastMessages(roomId, oldMessages => (oldMessages || []).map(msg => msg === chatMessage
         ? {...msg, status: StatusMessage.UNDELIVERED}
         : msg
       ));

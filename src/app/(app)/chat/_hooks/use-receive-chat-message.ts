@@ -1,11 +1,11 @@
 import {useStomp} from "@/app/(app)/chat/_providers/stomp-providers";
 import {useEffect} from "react";
 import {parseChatMessageSent} from "@/app/(app)/chat/actions";
-import {ChatMessageSent} from "@/app/(app)/chat/definitions";
+import {ChatMessageDto} from "@/app/(app)/chat/definitions";
 
-type OnReceiveMessage = (message: ChatMessageSent) => void;
+type OnReceiveChatMessage = (message: ChatMessageDto) => void;
 
-export function useReceiveMessage(participantId: number | undefined, onReceiveMessage: OnReceiveMessage) {
+export function useReceiveChatMessage(participantId: number | undefined, onReceiveMessage: OnReceiveChatMessage) {
   const {subscribe, unsubscribe, connected} = useStomp();
   
   useEffect(() => {

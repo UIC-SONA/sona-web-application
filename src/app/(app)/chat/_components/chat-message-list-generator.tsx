@@ -1,16 +1,15 @@
 "use client";
 
 import {Check, CheckCheck, CircleX, Clock} from "lucide-react";
-import {MAIN_SERVER_URL} from "@/constants";
-import {useState} from "react";
-import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger} from "@/components/ui/dialog";
 import {ChatMessage, StatusMessage} from "@/app/(app)/chat/_providers/chat-provider";
 import {ChatMessageList} from "@/app/(app)/chat/_components/chat-message-list";
 import {ChatBubble, ChatBubbleAvatar, ChatBubbleMessage, ChatBubbleTimestamp} from "@/app/(app)/chat/_components/chat-bubble";
 import {profilePicturePath} from "@/app/(app)/dashboard/users/actions";
 import {ChatMessageType, ChatUser} from "@/app/(app)/chat/definitions";
 import {DateFormatter, getLocalTimeZone, isSameDay, today, ZonedDateTime} from "@internationalized/date";
-import {AudioPlayer} from "@/app/(app)/chat/_components/audio-player";
+import {ChatMessageAudioPlayer} from "@/app/(app)/chat/_components/chat-message-audio-player";
+import {LazyContainer} from "@/components/lazy/lazy-container";
+import {ChatMessageImageViewer} from "@/app/(app)/chat/_components/chat-message-image-viewer";
 
 interface ChatListProps {
   messages: ChatMessage[];
@@ -21,7 +20,7 @@ interface ChatListProps {
 export default function ChatMessageListGenerator({messages, participans, isMe}: Readonly<ChatListProps>) {
   return <div className="w-full overflow-y-hidden h-full flex flex-col">
     <ChatMessageList>
-      {messages.map((message, index) => {
+      {messages.map(message => {
         
         const variant = isMe(message.sentBy.id) ? "sent" : "received";
         const otherParticipants = participans.filter(participant => !isMe(participant.id));
@@ -41,20 +40,14 @@ export default function ChatMessageListGenerator({messages, participans, isMe}: 
             variant={variant}
             className="p-2 text-sm"
           >
-            
             <BuildChatMessage message={message}/>
-            
             <div className="flex items-center justify-between space-x-2 mt-2">
-              <ChatBubbleTimestamp
-                timestamp={getFormattedTime(message.createdAt)}
-              />
-              
+              <ChatBubbleTimestamp timestamp={getFormattedTime(message.createdAt)}/>
               <ChatBubbleStatus
                 hasRead={hasRead}
                 status={message.status}
               />
             </div>
-          
           </ChatBubbleMessage>
         </ChatBubble>
       })}
@@ -67,6 +60,7 @@ interface BuildChatMessageProps {
 }
 
 function BuildChatMessage({message}: Readonly<BuildChatMessageProps>) {
+  
   if (message.type === ChatMessageType.TEXT) {
     return message.message;
   }
@@ -75,60 +69,35 @@ function BuildChatMessage({message}: Readonly<BuildChatMessageProps>) {
     if (message.status === StatusMessage.SENDING) {
       return <span className="italic text-sm ">Enviando imagen...</span>;
     }
-    
-    const uri = new URL(`/chat/resource`, MAIN_SERVER_URL);
-    uri.searchParams.append("id", message.message);
-    
-    return <ImageWithDialog src={uri.toString()}/>;
+    return <LazyContainer placeholder={<div className="w-64 h-64 bg-muted animate-pulse rounded-lg"/>}>
+      <ChatMessageImageViewer src={message.message}/>
+    </LazyContainer>
   }
   
   if (message.type === ChatMessageType.VOICE) {
     if (message.status === StatusMessage.SENDING) {
       return <span className="italic text-sm ">Enviando mensaje de voz...</span>;
     }
-    const uri = new URL(`/chat/resource`, MAIN_SERVER_URL);
-    uri.searchParams.append("id", message.message);
-    
-    return <AudioPlayer src={uri.toString()}/>;
+    return <LazyContainer placeholder={<div className="h-10 bg-muted animate-pulse rounded-lg"/>}>
+      <ChatMessageAudioPlayer src={message.message}/>
+    </LazyContainer>
   }
-}
-
-interface ImageWithDialogProps {
-  src: string;
-}
-
-function ImageWithDialog({src}: Readonly<ImageWithDialogProps>) {
   
-  const [open, setOpen] = useState(false);
-  
-  const toggleDialog = () => setOpen(!open);
-  
-  return (
-    <Dialog open={open} onOpenChange={toggleDialog}>
-      <DialogTrigger asChild>
-        <div className="relative w-64 h-64 cursor-pointer">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={src}
-            className="object-contain rounded-lg w-full h-full"
-            alt="Preview"
-            width={256}
-          />
-        </div>
-      </DialogTrigger>
-      
-      <DialogContent className="w-[90vw] h-[90vh] p-5 overflow-hidden flex items-center justify-center">
-        <div className="relative w-full h-full">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={src}
-            className="object-contain w-full h-full"
-            alt="Full View"
-          />
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
+  if (message.type === ChatMessageType.VIDEO) {
+    if (message.status === StatusMessage.SENDING) {
+      return <span className="italic text-sm ">Enviando video...</span>;
+    }
+    return <LazyContainer placeholder={<div className="w-64 h-36 bg-muted animate-pulse rounded-lg"/>}>
+      <video
+        src={message.message}
+        className="rounded-lg max-h-60"
+        controls
+      >
+        Your browser does not support the video tag.
+        <track kind="captions"/>
+      </video>
+    </LazyContainer>
+  }
 }
 
 
