@@ -84,8 +84,7 @@ export const renderWaveform = (
       opacity = 1;
     } else if (isCurrentProgressBar) {
       barColor = themeStyles.progress;
-      const barProgress =
-        (progress - barStartRatio) / (barEndRatio - barStartRatio);
+      const barProgress = (progress - barStartRatio) / (barEndRatio - barStartRatio);
       opacity = 0.6 + 0.4 * Math.max(0, Math.min(1, barProgress));
     }
     
