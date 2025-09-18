@@ -71,9 +71,7 @@ jobs:
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_KEY }}
           script_stop: true
-          envs:
-            REMOTE_PATH: ${{ secrets.REMOTE_PATH }}
-
+          envs: REMOTE_PATH
           script: |
             cd $REMOTE_PATH
             echo "Iniciando proceso de deployment..."
