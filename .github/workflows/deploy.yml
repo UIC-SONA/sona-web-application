@@ -123,8 +123,10 @@ jobs:
             pm2 save
 
             # Limpiar releases antiguas (mantener solo las últimas 2)
+            # Mantener solo las 3 releases más recientes
             cd $REMOTE_PATH
-            ls -t | grep "^release_" | tail -n +2 | xargs -r rm -rf
+            RELEASES_TO_KEEP=3
+            ls -t | grep "^release_" | tail -n +$((RELEASES_TO_KEEP + 1)) | xargs -r rm -rf
 
             echo "--------------------------------------------------"
             echo "   ✅ Deployment completed successfully!"
