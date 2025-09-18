@@ -51,8 +51,10 @@ jobs:
           # Crear directorio de destino
           ssh -i ~/.ssh/deploy_key $REMOTE_USER@$REMOTE_HOST "mkdir -p $REMOTE_PATH"
 
-          # Copiar la carpeta de build al servidor
-          scp -i ~/.ssh/deploy_key -r deploy/* $REMOTE_USER@$REMOTE_HOST:$REMOTE_PATH
+          scp -i ~/.ssh/deploy_key -r deploy/.next $REMOTE_USER@$REMOTE_HOST:$REMOTE_PATH
+          scp -i ~/.ssh/deploy_key deploy/package.json $REMOTE_USER@$REMOTE_HOST:$REMOTE_PATH
+          scp -i ~/.ssh/deploy_key deploy/package-lock.json $REMOTE_USER@$REMOTE_HOST:$REMOTE_PATH
+          scp -i ~/.ssh/deploy_key deploy/.env.production $REMOTE_USER@$REMOTE_HOST:$REMOTE_PATH
 
       # 7. Ejecutar PM2 en el servidor
       - name: Deploy with PM2 on remote server
