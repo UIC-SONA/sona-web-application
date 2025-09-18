@@ -61,42 +61,71 @@ jobs:
           # Transferir archivo comprimido (¡mucho más rápido!)
           scp -i ~/.ssh/deploy_key deploy.tar.gz $REMOTE_USER@$REMOTE_HOST:$REMOTE_PATH/
 
-      # 7. Descomprimir y desplegar con PM2
+      # 7. Descomprimir y desplegar con PM2 (Deployment Atómico)
       - name: Deploy with PM2 on remote server
         uses: appleboy/ssh-action@v1.1.0
+        env:
+          REMOTE_PATH: ${{ secrets.REMOTE_PATH }}
         with:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_KEY }}
           script_stop: true
-          script: |
-            cd ${{ secrets.REMOTE_PATH }}
 
-            # Descomprimir archivos
-            echo "Descomprimiendo archivos..."
-            tar -xzf deploy.tar.gz
+          script: |
+            cd $REMOTE_PATH
+
+            # Crear timestamp para esta release
+            RELEASE_DIR="release_$(date +%Y%m%d_%H%M%S)"
+            echo "Preparando release: $RELEASE_DIR"
+
+            # Crear directorio temporal para la nueva release
+            mkdir -p $RELEASE_DIR
+            
+            # Descomprimir archivos EN EL DIRECTORIO TEMPORAL
+            echo "Descomprimiendo archivos en $RELEASE_DIR..."
+            tar -xzf deploy.tar.gz -C $RELEASE_DIR
             
             # Limpiar archivo comprimido
             rm deploy.tar.gz
             
-            echo "Archivos descomprimidos correctamente"
-            ls -la
-
-            # Instalar dependencias de producción
+            # Instalar dependencias en el directorio temporal
             echo "Instalando dependencias..."
+            cd $RELEASE_DIR
             npm install --production
+            
+            # Volver al directorio padre
+            cd ${{ secrets.REMOTE_PATH }}
 
-            # Detener la app si ya estaba corriendo
-            echo "Deteniendo aplicación anterior..."
+            # DETENER LA APP ANTES DE CAMBIAR ARCHIVOS
+            echo "Deteniendo aplicación..."
             pm2 stop sona-panel || true
 
-            # Iniciar o reiniciar la app con PM2
+            # Hacer backup de la versión actual (si existe)
+            if [ -L "current" ]; then
+              BACKUP_DIR=$(readlink current)
+              echo "Respaldando release anterior: $BACKUP_DIR"
+              ln -sfn $BACKUP_DIR previous || true
+            fi
+
+            # DEPLOYMENT ATÓMICO: cambiar el symlink
+            echo "Activando nueva release..."
+            ln -sfn $RELEASE_DIR current
+
+            # Iniciar la app desde el symlink 'current'
+            cd current
             echo "Iniciando aplicación con PM2..."
             pm2 start npm --name "sona-panel" -- start
 
-            # Guardar configuración para reinicio automático del servidor
+            # Guardar configuración PM2
             pm2 save
-            
+
+            # Limpiar releases antiguas (mantener solo las últimas 3)
+            cd ${{ secrets.REMOTE_PATH }}
+            ls -t | grep "^release_" | tail -n +4 | xargs -r rm -rf
+
             echo "--------------------------------------------------"
-            echo "   Deployment completed successfully! 🚀"
+            echo "   ✅ Deployment completed successfully!"
+            echo "   📁 Active release: $RELEASE_DIR"
+            echo "   🔗 Symlink: current -> $RELEASE_DIR"
             echo "--------------------------------------------------"
