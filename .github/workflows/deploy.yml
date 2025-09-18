@@ -74,6 +74,7 @@ jobs:
 
           script: |
             cd $REMOTE_PATH
+            echo "Iniciando proceso de deployment en $REMOTE_PATH..."
 
             # Crear timestamp para esta release
             RELEASE_DIR="release_$(date +%Y%m%d_%H%M%S)"
@@ -95,7 +96,7 @@ jobs:
             npm install --production
             
             # Volver al directorio padre
-            cd ${{ secrets.REMOTE_PATH }}
+            cd $REMOTE_PATH
 
             # DETENER LA APP ANTES DE CAMBIAR ARCHIVOS
             echo "Deteniendo aplicación..."
