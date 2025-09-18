@@ -94,7 +94,7 @@ jobs:
             # Instalar dependencias en el directorio temporal
             echo "Instalando dependencias..."
             cd $RELEASE_DIR
-            npm install --production
+            npm install --omit=dev
             
             # Volver al directorio padre
             cd $REMOTE_PATH
