@@ -100,8 +100,8 @@ jobs:
             cd $REMOTE_PATH
 
             # DETENER LA APP ANTES DE CAMBIAR ARCHIVOS
-            echo "Deteniendo aplicación..."
-            pm2 stop sona-panel || true
+            echo "Deteniendo y eliminando aplicación anterior..."
+            pm2 delete sona-panel || true
 
             # Hacer backup de la versión actual (si existe)
             if [ -L "current" ]; then
@@ -117,13 +117,13 @@ jobs:
             # Iniciar la app desde el symlink 'current'
             cd current
             echo "Iniciando aplicación con PM2..."
-            pm2 start npm --name "sona-panel" -e PORT=8000 -- start
+            pm2 start npm --name "sona-panel" -- start
             
             # Guardar configuración PM2
             pm2 save
 
             # Limpiar releases antiguas (mantener solo las últimas 3)
-            cd ${{ secrets.REMOTE_PATH }}
+            cd $REMOTE_PATH
             ls -t | grep "^release_" | tail -n +4 | xargs -r rm -rf
 
             echo "--------------------------------------------------"
