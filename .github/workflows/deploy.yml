@@ -117,8 +117,8 @@ jobs:
             # Iniciar la app desde el symlink 'current'
             cd current
             echo "Iniciando aplicación con PM2..."
-            pm2 start npm --name "sona-panel" -- start
-
+            pm2 start npm --name "sona-panel" -e PORT=8000 -- start
+            
             # Guardar configuración PM2
             pm2 save
 
