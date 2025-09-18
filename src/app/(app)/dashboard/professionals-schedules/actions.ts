@@ -3,6 +3,7 @@ import {client} from "@/lib/http/axios-client";
 import {restCrud} from "@/lib/rest-crud";
 import {attempt} from "@/lib/result";
 import {CalendarDate, parseDate} from "@internationalized/date";
+import {parseErrorOrValidationErrors} from "@/lib/errors";
 
 const resource = '/professional-schedule';
 
@@ -30,13 +31,14 @@ const crud = restCrud<ProfessionalSchedule, ProfessionalScheduleDto, number>(cli
 export const updateProfessionalScheduleAction = crud.update;
 export const deleteProfessionalScheduleAction = crud.delete;
 
-export const createMultipleProfessionalSchedulesAction = attempt(async (data: ProfessionalSchedulesDto) => {
+
+export const createMultipleProfessionalSchedulesAction = attempt(async (data: ProfessionalSchedulesDto): Promise<ProfessionalSchedule[]> => {
   const response = await client.post<[]>(
     `${resource}/all`,
     {...data, dates: data.dates.map(d => d.toString())}
   );
   return response.data.map(entityConverter);
-});
+}, parseErrorOrValidationErrors);
 
 
 export const findProfessionalScheduleByProfessional = attempt(async (professionalId: number, from: CalendarDate, to: CalendarDate) => {

@@ -3,7 +3,7 @@ import {type ErrorDescription, parseError} from "@/lib/errors";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type AnyFunction = (...args: any[]) => any;
 type AttemptCallback = () => any;
-type ReturnTypeAwaited<F extends AnyFunction> = ReturnType<Awaited<F>>;
+type AwaitedReturnType<F extends AnyFunction> = Awaited<ReturnType<F>>;
 type IsPromise<T> = T extends Promise<any> ? true : false;
 
 /**
@@ -90,7 +90,7 @@ export function or<T, E>(result: Failure<E> | Success<T>, defaultValue: T): T {
 export function tryGet<F extends AttemptCallback>(
   callback: F
 ): IsPromise<ReturnType<F>> extends true
-  ? AwaitResult<ReturnTypeAwaited<F>, ErrorDescription>
+  ? AwaitResult<AwaitedReturnType<F>, ErrorDescription>
   : Result<ReturnType<F>, ErrorDescription>;
 
 /**
@@ -101,22 +101,22 @@ export function tryGet<F extends AttemptCallback, E>(
   callback: F,
   parser: (error: unknown) => E
 ): IsPromise<ReturnType<F>> extends true
-  ? AwaitResult<ReturnTypeAwaited<F>, E>
+  ? AwaitResult<AwaitedReturnType<F>, E>
   : Result<ReturnType<F>, E>;
 
 export function tryGet<F extends AttemptCallback, E>(
   callback: F,
   parser: (error: unknown) => E = parseError as (error: unknown) => E
-): Result<ReturnType<F>, E> | AwaitResult<ReturnTypeAwaited<F>, E> {
+): Result<ReturnType<F>, E> | AwaitResult<AwaitedReturnType<F>, E> {
   const result = callback();
   if (result instanceof Promise) {
     const promise = result
-    .then(data => asResult<ReturnTypeAwaited<F>, E>(succeed(data)))
-    .catch(error => asResult<ReturnTypeAwaited<F>, E>(fail(parser(error))));
+    .then(data => asResult<AwaitedReturnType<F>, E>(succeed(data)))
+    .catch(error => asResult<AwaitedReturnType<F>, E>(fail(parser(error))));
     
     return Object.assign(promise, {
       unwrap: () => promise.then(res => res.unwrap()),
-      or: (defaultValue: ReturnTypeAwaited<F>) => promise.then(res => res.or(defaultValue)),
+      or: (defaultValue: AwaitedReturnType<F>) => promise.then(res => res.or(defaultValue)),
     });
   }
   try {
@@ -133,7 +133,7 @@ export function tryGet<F extends AttemptCallback, E>(
 export function attempt<F extends AnyFunction>(
   callback: F
 ): IsPromise<ReturnType<F>> extends true
-  ? (...args: Parameters<F>) => AwaitResult<ReturnTypeAwaited<F>, ErrorDescription>
+  ? (...args: Parameters<F>) => AwaitResult<AwaitedReturnType<F>, ErrorDescription>
   : (...args: Parameters<F>) => Result<ReturnType<F>, ErrorDescription>;
 
 /**
@@ -144,7 +144,7 @@ export function attempt<F extends AnyFunction, E>(
   callback: F,
   parser: (error: unknown) => E
 ): IsPromise<ReturnType<F>> extends true
-  ? (...args: Parameters<F>) => AwaitResult<ReturnTypeAwaited<F>, E>
+  ? (...args: Parameters<F>) => AwaitResult<AwaitedReturnType<F>, E>
   : (...args: Parameters<F>) => Result<ReturnType<F>, E>;
 
 export function attempt<F extends AnyFunction, E>(

@@ -14,9 +14,9 @@ function entityConverter(model: any): Comment {
   };
 }
 
-export async function pageCommentsAction(postId: string, query: PageQuery) {
+export function pageCommentsAction(postId: string, query: PageQuery) {
   const operarion = restPageable<Comment>(client, resource.replace('${id}', postId), {entityConverter});
-  return await operarion.page(query);
+  return operarion.page(query);
 }
 
 export function findCommentAction(postId: string, commentId: string) {
@@ -24,8 +24,8 @@ export function findCommentAction(postId: string, commentId: string) {
   return operarion.find(commentId);
 }
 
-export async function deleteCommentActions(postId: string, commentId: string) {
+export function deleteCommentActions(postId: string, commentId: string) {
   const operarion = restDeleteable<string>(client, resource.replace('${id}', postId));
-  return await operarion.delete(commentId);
+  return operarion.delete(commentId);
 }
 

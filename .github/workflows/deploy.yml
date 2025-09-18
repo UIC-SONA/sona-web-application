@@ -1,0 +1,82 @@
+name: CI/CD Next.js con PM2
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Obtener el código
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Configurar Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # 3. Instalar dependencias
+      - name: Install dependencies
+        run: npm ci
+
+      # 4. Compilar Next.js
+      - name: Build Next.js
+        run: |
+          echo "${{ secrets.NEXT_PROD_ENV }}" > .env.production
+          npm run build
+
+      # 5. Preparar carpeta de deploy
+      - name: Prepare files for deployment
+        run: |
+          mkdir -p deploy
+          cp -R .next package.json package-lock.json .env.production deploy/
+
+      # 6. Copiar al servidor remoto
+      - name: Send prod files to remote server
+        env:
+          REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+          REMOTE_USER: ${{ secrets.REMOTE_USER }}
+          REMOTE_PATH: ${{ secrets.REMOTE_PATH }}
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H $REMOTE_HOST >> ~/.ssh/known_hosts
+
+          # Crear directorio de destino
+          ssh -i ~/.ssh/deploy_key $REMOTE_USER@$REMOTE_HOST "mkdir -p $REMOTE_PATH"
+
+          # Copiar la carpeta de build al servidor
+          scp -i ~/.ssh/deploy_key -r deploy/* $REMOTE_USER@$REMOTE_HOST:$REMOTE_PATH
+
+      # 7. Ejecutar PM2 en el servidor
+      - name: Deploy with PM2 on remote server
+        uses: appleboy/ssh-action@v1.1.0
+        with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script_stop: true
+          script: |
+            cd $REMOTE_PATH
+
+            # Instalar dependencias de producción
+            npm install --production
+
+            # Detener la app si ya estaba corriendo
+            pm2 stop sona-panel || true
+
+            # Iniciar o reiniciar la app con PM2
+            pm2 start npm --name "sona-panel" -- start
+
+            # Guardar configuración para reinicio automático del servidor
+            pm2 save
+            
+            echo "--------------------------------------------------"
+            echo "      Deployment completed successfully :3"
+            echo "--------------------------------------------------"

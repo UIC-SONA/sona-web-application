@@ -71,9 +71,9 @@ export default function Page() {
   
   const postId = params.id as string;
   
-  const findComment = useCallback(async (id: string) => findCommentAction(postId, id), [postId]);
-  const pageComments = useCallback(async (query: PageQuery) => pageCommentsAction(postId, query), [postId]);
-  const deleteComment = useCallback(async (id: string) => deleteCommentActions(postId, id), [postId]);
+  const findComment = useCallback((id: string) => findCommentAction(postId, id), [postId]);
+  const pageComments = useCallback((query: PageQuery) => pageCommentsAction(postId, query), [postId]);
+  const deleteComment = useCallback((id: string) => deleteCommentActions(postId, id), [postId]);
   
   return <BreadcrumbLayout
     homePage="/dashboard"
